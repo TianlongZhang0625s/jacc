@@ -8,18 +8,18 @@ import org.xbib.jacc.grammar.Machine;
  */
 class Conflicts {
 
-    private int type;
-    private int arg1;
-    private int arg2;
-    private Grammar.Symbol sym;
+    private final int type;
+    private final int arg1;
+    private final int arg2;
+    private final Grammar.Symbol sym;
     private Conflicts next;
 
     private Conflicts(int i, int j, int k, Grammar.Symbol symbol, Conflicts conflicts) {
-        type = i;
-        arg1 = j;
-        arg2 = k;
-        sym = symbol;
-        next = conflicts;
+        this.type = i;
+        this.arg1 = j;
+        this.arg2 = k;
+        this.sym = symbol;
+        this.next = conflicts;
     }
 
     static Conflicts sr(int i, int j, Grammar.Symbol symbol, Conflicts conflicts) {
@@ -43,7 +43,8 @@ class Conflicts {
         return conflicts;
     }
 
-    static String describe(Machine machine, int i, Conflicts conflicts) {
+    static String describe(Machine machine, int i, Conflicts c) {
+        Conflicts conflicts = c;
         if (conflicts == null) {
             return "";
         }

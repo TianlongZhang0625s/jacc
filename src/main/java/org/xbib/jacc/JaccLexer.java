@@ -21,74 +21,69 @@ class JaccLexer extends SourceLexer implements JaccTokens {
 
     @Override
     public int nextToken() throws IOException {
-        do {
+        while (true) {
             skipWhitespace();
             markPosition();
             lexemeText = null;
             switch (c) {
                 case -1:
-                    return token = ENDINPUT;
-
-                case 58: // ':'
+                    token = ENDINPUT;
+                    return token;
+                case ':':
                     nextChar();
-                    return token = COLON;
-
-                case 59: // ';'
+                    token = COLON;
+                    return token;
+                case ';':
                     nextChar();
-                    return token = SEMI;
-
-                case 124: // '|'
+                    token = SEMI;
+                    return token;
+                case '|':
                     nextChar();
-                    return token = BAR;
-
-                case 60: // '<'
+                    token = BAR;
+                    return token;
+                case '<':
                     nextChar();
-                    return token = TOPEN;
-
-                case 62: // '>'
+                    token = TOPEN;
+                    return token;
+                case '>':
                     nextChar();
-                    return token = TCLOSE;
-
-                case 91: // '['
+                    token = TCLOSE;
+                    return token;
+                case '[':
                     nextChar();
-                    return token = BOPEN;
-
-                case 93: // ']'
+                    token = BOPEN;
+                    return token;
+                case ']':
                     nextChar();
-                    return token = BCLOSE;
-
-                case 46: // '.'
+                    token = BCLOSE;
+                    return token;
+                case '.':
                     nextChar();
-                    return token = DOT;
-
-                case 37: // '%'
+                    token = DOT;
+                    return token;
+                case '%':
                     if (directive() != -1) {
                         return token;
                     }
                     break;
-
-                case 34: // '"'
+                case '"':
                     if (string() != -1) {
                         return token;
                     }
                     break;
-
-                case 39: // '\''
+                case '\'':
                     if (literal() != -1) {
                         return token;
                     }
                     break;
-
-                case 123: // '{'
+                case '{':
                     if (action() != -1) {
                         return token;
                     }
                     break;
-
-                case 47: // '/'
+                case '/':
                     skipComment();
                     break;
-
                 default:
                     if (Character.isJavaIdentifierStart((char) c)) {
                         return identifier();
@@ -100,7 +95,7 @@ class JaccLexer extends SourceLexer implements JaccTokens {
                     nextChar();
                     break;
             }
-        } while (true);
+        }
     }
 
     String readWholeLine() throws IOException {
@@ -176,64 +171,68 @@ class JaccLexer extends SourceLexer implements JaccTokens {
             nextChar();
         } while (c != -1 && Character.isJavaIdentifierPart((char) c));
         lexemeText = line.substring(i, col);
-        return token = IDENT;
+        token = IDENT;
+        return token;
     }
 
     private int directive() throws IOException {
         nextChar();
         if (c == 37) {
             nextChar();
-            return token = MARK;
+            token = MARK;
+            return token;
         }
         if (Character.isJavaIdentifierStart((char) c)) {
             identifier();
-            if (lexemeText.equals("token")) {
-                return token = TOKEN;
-            }
-            if (lexemeText.equals("type")) {
-                return token = TYPE;
-            }
-            if (lexemeText.equals("prec")) {
-                return token = PREC;
-            }
-            if (lexemeText.equals("left")) {
-                return token = LEFT;
-            }
-            if (lexemeText.equals("right")) {
-                return token = RIGHT;
-            }
-            if (lexemeText.equals("nonassoc")) {
-                return token = NONASSOC;
-            }
-            if (lexemeText.equals("start")) {
-                return token = START;
-            }
-            if (lexemeText.equals("package")) {
-                return token = PACKAGE;
-            }
-            if (lexemeText.equals("extends")) {
-                return token = EXTENDS;
-            }
-            if (lexemeText.equals("implements")) {
-                return token = IMPLEMENTS;
-            }
-            if (lexemeText.equals("semantic")) {
-                return token = SEMANTIC;
-            }
-            if (lexemeText.equals("get")) {
-                return token = GETTOKEN;
-            }
-            if (lexemeText.equals("next")) {
-                return token = NEXTTOKEN;
-            }
-            if (lexemeText.equals("class")) {
-                return token = CLASS;
-            }
-            if (lexemeText.equals("interface")) {
-                return token = INTERFACE;
-            } else {
-                report(new Failure(getPos(), "Unrecognized directive"));
-                return ERROR;
+            switch (lexemeText) {
+                case "token":
+                    token = TOKEN;
+                    return token;
+                case "type":
+                    token = TYPE;
+                    return token;
+                case "prec":
+                    token = PREC;
+                    return token;
+                case "left":
+                    token = LEFT;
+                    return token;
+                case "right":
+                    token = RIGHT;
+                    return token;
+                case "nonassoc":
+                    token = NONASSOC;
+                    return token;
+                case "start":
+                    token = START;
+                    return token;
+                case "package":
+                    token = PACKAGE;
+                    return token;
+                case "extends":
+                    token = EXTENDS;
+                    return token;
+                case "implements":
+                    token = IMPLEMENTS;
+                    return token;
+                case "semantic":
+                    token = SEMANTIC;
+                    return token;
+                case "get":
+                    token = GETTOKEN;
+                    return token;
+                case "next":
+                    token = NEXTTOKEN;
+                    return token;
+                case "class":
+                    token = CLASS;
+                    return token;
+                case "interface":
+                    token = INTERFACE;
+                    return token;
+                default:
+                    report(new Failure(getPos(), "Unrecognized directive"));
+                    return ERROR;
             }
         }
         if (c == 123) {
@@ -256,13 +255,15 @@ class JaccLexer extends SourceLexer implements JaccTokens {
                 if (c == 125) {
                     lexemeText = endBuffer(sb, i, col - 1);
                     nextChar();
-                    return token = CODE;
+                    token = CODE;
+                    return token;
                 }
             }
             if (c == -1) {
                 report(new Failure(getPos(), "Code fragment terminator %} not found"));
                 lexemeText = endBuffer(sb, i, col);
-                return token = CODE;
+                token = CODE;
+                return token;
             }
             if (c == 10) {
                 if (sb == null) {
@@ -304,7 +305,8 @@ class JaccLexer extends SourceLexer implements JaccTokens {
         } while (k >= 0);
         lexemeText = line.substring(i, col);
         lastLiteral = j;
-        return token = INTLIT;
+        token = INTLIT;
+        return token;
     }
 
     private int string() {
@@ -323,7 +325,8 @@ class JaccLexer extends SourceLexer implements JaccTokens {
         } else {
             report(new Warning(getPos(), "Missing \" on string literal"));
         }
-        return token = STRLIT;
+        token = STRLIT;
+        return token;
     }
 
     private int literal() {
@@ -346,23 +349,26 @@ class JaccLexer extends SourceLexer implements JaccTokens {
             report(new Warning(getPos(), "Missing ' on character literal"));
         }
         lexemeText = line.substring(i, col);
-        return token = CHARLIT;
+        token = CHARLIT;
+        return token;
     }
 
     private void escapeChar() {
         nextChar();
         switch (c) {
-            case 34: // '"'
-            case 39: // '\''
-            case 92: // '\\'
-            case 98: // 'b'
-            case 102: // 'f'
-            case 110: // 'n'
-            case 114: // 'r'
-            case 116: // 't'
+            case '"':
+            case '\'':
+            case '\\':
+            case 'b':
+            case 'f':
+            case 'n':
+            case 'r':
+            case 't':
                 lastLiteral = c;
                 nextChar();
                 return;
+            default:
+                break;
         }
         int i = Character.digit((char) c, 8);
         if (i >= 0) {
@@ -387,7 +393,8 @@ class JaccLexer extends SourceLexer implements JaccTokens {
                 if (--j == 0) {
                     nextChar();
                     lexemeText = endBuffer(sb, i, col);
-                    return token = ACTION;
+                    token = ACTION;
+                    return token;
                 }
             } else {
                 if (c == 123) {
@@ -397,7 +404,8 @@ class JaccLexer extends SourceLexer implements JaccTokens {
             if (c == -1) {
                 report(new Failure(getPos(), "Unterminated action"));
                 lexemeText = endBuffer(sb, i, col);
-                return token = ACTION;
+                token = ACTION;
+                return token;
             }
             if (c == 10) {
                 if (sb == null) {

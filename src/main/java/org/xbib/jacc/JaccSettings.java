@@ -9,12 +9,9 @@ import org.xbib.jacc.grammar.SLRMachine;
 /**
  *
  */
-class Settings {
+class JaccSettings {
 
-    private static final int LR0 = 0;
-    private static final int SLR1 = 1;
-    private static final int LALR1 = 2;
-    private int machineType;
+    private MachineType machineType;
     private String packageName;
     private String className;
     private String interfaceName;
@@ -27,28 +24,26 @@ class Settings {
     private StringBuilder preTextBuffer;
     private StringBuilder postTextBuffer;
 
-    Settings() {
-        machineType = LALR1;
-        preTextBuffer = new StringBuilder();
-        postTextBuffer = new StringBuilder();
+    JaccSettings() {
+        this.machineType = MachineType.LALR1;
+        this.preTextBuffer = new StringBuilder();
+        this.postTextBuffer = new StringBuilder();
     }
 
-    public int getMachineType() {
-        return machineType;
-    }
-
-    void setMachineType(int i) {
-        machineType = i;
+    void setMachineType(MachineType machineType) {
+        this.machineType = machineType;
     }
 
     LookaheadMachine makeMachine(Grammar grammar) {
-        if (machineType == LR0) {
-            return new LR0Machine(grammar);
-        }
-        if (machineType == SLR1) {
-            return new SLRMachine(grammar);
-        } else {
-            return new LALRMachine(grammar);
+        switch (machineType) {
+            case LR0:
+                return new LR0Machine(grammar);
+            case SLR1:
+                return new SLRMachine(grammar);
+            case LALR1:
+                return new LALRMachine(grammar);
+            default:
+                return null;
         }
     }
 

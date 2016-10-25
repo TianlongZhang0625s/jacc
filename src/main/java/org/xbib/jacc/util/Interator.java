@@ -3,9 +3,9 @@ package org.xbib.jacc.util;
 /**
  *
  */
-public abstract class Interator {
+public interface Interator {
 
-    public abstract int next();
+    int next();
 
-    public abstract boolean hasNext();
+    boolean hasNext();
 }

@@ -10,7 +10,7 @@ import java.io.Writer;
 /**
  *
  */
-class ParserOutput extends Output {
+class ParserOutput extends AbstractOutput {
 
     private int yyaccept;
     private int yyabort;
@@ -33,29 +33,30 @@ class ParserOutput extends Output {
         tables.analyzeRows();
     }
 
+    @Override
     public void write(Writer writer) throws IOException {
         datestamp(writer);
-        String s = settings.getPackageName();
+        String s = jaccSettings.getPackageName();
         if (s != null) {
             writer.write("package " + s + ";\n");
         }
-        if (settings.getPreText() != null) {
-            writer.write(settings.getPreText() + "\n");
+        if (jaccSettings.getPreText() != null) {
+            writer.write(jaccSettings.getPreText() + "\n");
         }
         yyaccept = 2 * numStates;
         stackOverflow = 2 * numStates + 1;
         yyabort = 2 * numStates + 2;
         errorHandler = 2 * numStates + 3;
         userErrorHandler = 2 * numStates + 4;
-        int ai[] = new int[numNTs];
+        int[] ai = new int[numNTs];
         stNumSwitches = new int[numStates];
         for (int i = 0; i < numStates; i++) {
-            int ai1[] = machine.getGotosAt(i);
+            int[] ai1 = machine.getGotosAt(i);
             for (int anAi1 : ai1) {
                 ai[machine.getEntry(anAi1)]++;
             }
-            byte abyte0[] = tables.getActionAt(i);
-            int ai4[] = tables.getArgAt(i);
+            byte[] abyte0 = tables.getActionAt(i);
+            int[] ai4 = tables.getArgAt(i);
             int l3 = tables.getDefaultRowAt(i);
             stNumSwitches[i] = 0;
             for (int j4 = 0; j4 < abyte0.length; j4++) {
@@ -73,7 +74,7 @@ class ParserOutput extends Output {
             ntGotoSrc[j] = new int[ai[j]];
         }
         for (int k = 0; k < numStates; k++) {
-            int ai2[] = machine.getGotosAt(k);
+            int[] ai2 = machine.getGotosAt(k);
             for (int anAi2 : ai2) {
                 int j3 = machine.getEntry(anAi2);
                 ntGoto[j3][--ai[j3]] = anAi2;
@@ -101,12 +102,12 @@ class ParserOutput extends Output {
         }
         errMsgs = tables.getNumErrors() > 0;
         errTok = numNTs;
-        while (errTok < numSyms && !grammar.getSymbol(errTok).getName().equals("error")) {
+        while (errTok < numSyms && !"error".equals(grammar.getSymbol(errTok).getName())) {
             errTok++;
         }
         if (errTok < numSyms) {
             for (int i1 = 0; i1 < numStates && !errUsed; i1++) {
-                int ai3[] = machine.getShiftsAt(i1);
+                int[] ai3 = machine.getShiftsAt(i1);
                 for (int l2 = 0; l2 < ai3.length && !errUsed; l2++) {
                     if (machine.getEntry(ai3[l2]) == errTok) {
                         errUsed = true;
@@ -114,12 +115,12 @@ class ParserOutput extends Output {
                 }
             }
         }
-        writer.write("public class " + settings.getClassName());
-        if (settings.getExtendsName() != null) {
-            writer.write(" extends " + settings.getExtendsName());
+        writer.write("public class " + jaccSettings.getClassName());
+        if (jaccSettings.getExtendsName() != null) {
+            writer.write(" extends " + jaccSettings.getExtendsName());
         }
-        if (settings.getImplementsNames() != null) {
-            writer.write(" implements " + settings.getImplementsNames());
+        if (jaccSettings.getImplementsNames() != null) {
+            writer.write(" implements " + jaccSettings.getImplementsNames());
         }
         writer.write(" {\n");
         indent(writer, 1, new String[]{
@@ -132,8 +133,8 @@ class ParserOutput extends Output {
         if (errUsed) {
             indent(writer, 1, "private int yyerrstatus = 3;");
         }
-        indent(writer, 1, "private " + settings.getTypeName() + "[] yysv;");
-        indent(writer, 1, "private " + settings.getTypeName() + " yyrv;");
+        indent(writer, 1, "private " + jaccSettings.getTypeName() + "[] yysv;");
+        indent(writer, 1, "private " + jaccSettings.getTypeName() + " yyrv;");
         writer.write("\n");
         defineParse(writer, 1);
         defineExpand(writer, 1);
@@ -142,15 +143,15 @@ class ParserOutput extends Output {
             defineState(writer, 1, j1);
         }
         for (int k1 = 0; k1 < numNTs; k1++) {
-            Grammar.Prod aprod[] = grammar.getProds(k1);
+            Grammar.Prod[] aprod = grammar.getProds(k1);
             for (Grammar.Prod anAprod : aprod) {
                 defineReduce(writer, 1, anAprod, k1);
             }
             defineNonterminal(writer, 1, k1);
         }
         defineErrMsgs(writer);
-        if (settings.getPostText() != null) {
-            writer.write(settings.getPostText() + "\n");
+        if (jaccSettings.getPostText() != null) {
+            writer.write(jaccSettings.getPostText() + "\n");
         }
         writer.write("}\n");
     }
@@ -176,7 +177,10 @@ class ParserOutput extends Output {
         indent(writer, i, new String[]{
                 "protected void yyexpand() {", "    int[] newyyst = new int[2*yyst.length];"
         });
-        indent(writer, i + 1, settings.getTypeName() + "[] newyysv = new " + settings.getTypeName() + "[2*yyst.length];");
+        indent(writer, i + 1, jaccSettings.getTypeName() +
+                "[] newyysv = new " +
+                jaccSettings.getTypeName() +
+                "[2*yyst.length];");
         indent(writer, i, new String[]{
                 "    for (int i=0; i<yyst.length; i++) {",
                 "        newyyst[i] = yyst[i];",
@@ -198,7 +202,7 @@ class ParserOutput extends Output {
             indent(writer, i, "}");
             writer.write("\n");
             indent(writer, i, "public void yyclearin() {");
-            indent(writer, i + 1, "yytok = (" + settings.getNextToken());
+            indent(writer, i + 1, "yytok = (" + jaccSettings.getNextToken());
             indent(writer, i + 1, "        );");
             indent(writer, i, "}");
             writer.write("\n");
@@ -216,8 +220,8 @@ class ParserOutput extends Output {
         if (errMsgs) {
             indent(writer, i + 1, "yyerrno = (-1);");
         }
-        indent(writer, i + 1, "yysv = new " + settings.getTypeName() + "[yyss];");
-        indent(writer, i + 1, "yytok = (" + settings.getGetToken());
+        indent(writer, i + 1, "yysv = new " + jaccSettings.getTypeName() + "[yyss];");
+        indent(writer, i + 1, "yytok = (" + jaccSettings.getGetToken());
         indent(writer, i + 1, "         );");
         indent(writer, i, new String[]{
                 "loop:", "    for (;;) {", "        switch (yyn) {"
@@ -243,9 +247,9 @@ class ParserOutput extends Output {
         indent(writer, i, "case " + j + ":");
         indent(writer, i + 1, "yyst[yysp] = " + j + ";");
         if (grammar.isTerminal(machine.getEntry(j))) {
-            indent(writer, i + 1, "yysv[yysp] = (" + settings.getGetSemantic());
+            indent(writer, i + 1, "yysv[yysp] = (" + jaccSettings.getGetSemantic());
             indent(writer, i + 1, "             );");
-            indent(writer, i + 1, "yytok = (" + settings.getNextToken());
+            indent(writer, i + 1, "yytok = (" + jaccSettings.getNextToken());
             indent(writer, i + 1, "        );");
             if (errUsed) {
                 indent(writer, i + 1, "yyerrstatus++;");
@@ -287,7 +291,7 @@ class ParserOutput extends Output {
         int k = tables.getDefaultRowAt(j);
         if (stNumSwitches[j] > 0) {
             indent(writer, i, "switch (yytok) {");
-            int ai1[] = tables.indexAt(j);
+            int[] ai1 = tables.indexAt(j);
             int k1;
             for (int l = 0; l < ai1.length; l = k1) {
                 int i1 = ai1[l];
@@ -357,7 +361,7 @@ class ParserOutput extends Output {
     }
 
     private void translateAction(Writer writer, JaccProd jaccprod, String s) throws IOException {
-        int ai[] = jaccprod.getRhs();
+        int[] ai = jaccprod.getRhs();
         int i = s.length();
         for (int j = 0; j < i; j++) {
             char c = s.charAt(j);
@@ -466,11 +470,11 @@ class ParserOutput extends Output {
         indent(writer, i, "case " + userErrorHandler + " :");
         indent(writer, i + 1, new String[]{
                 "if (yyerrstatus==0) {",
-                "    if ((" + settings.getGetToken(),
+                "    if ((" + jaccSettings.getGetToken(),
                 "         )==ENDINPUT) {",
                 "        return false;",
                 "    }",
-                "    " + settings.getNextToken(),
+                "    " + jaccSettings.getNextToken(),
                 "    ;"
         });
         indent(writer, i + 2, "yyn = " + numStates + " + yyst[yysp-1];");

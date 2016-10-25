@@ -8,38 +8,39 @@ import java.io.Writer;
  */
 public final class Finitary extends Analysis {
 
-    private boolean[] finitary;
-    private boolean[] consider;
-    private Grammar grammar;
-    private int numNTs;
+    private final boolean[] finitaries;
+    private final boolean[] consider;
+    private final Grammar grammar;
+    private final int numNTs;
 
     Finitary(Grammar grammar) {
         super(grammar.getComponents());
         this.grammar = grammar;
         numNTs = grammar.getNumNTs();
-        finitary = new boolean[numNTs];
+        finitaries = new boolean[numNTs];
         consider = new boolean[numNTs];
         for (int i = 0; i < numNTs; i++) {
-            finitary[i] = false;
+            finitaries[i] = false;
             consider[i] = true;
         }
         bottomUp();
     }
 
+    @Override
     protected boolean analyze(int i) {
         boolean flag = false;
         if (consider[i]) {
             int j = 0;
-            Grammar.Prod[] aprod = grammar.getProds(i);
-            for (Grammar.Prod anAprod : aprod) {
-                int ai[] = anAprod.getRhs();
+            Grammar.Prod[] prods = grammar.getProds(i);
+            for (Grammar.Prod prod : prods) {
+                int[] ai = prod.getRhs();
                 int l;
                 l = 0;
-                while (l < ai.length && at(ai[l])) {
+                while (l < ai.length && isAt(ai[l])) {
                     l++;
                 }
                 if (l >= ai.length) {
-                    finitary[i] = true;
+                    finitaries[i] = true;
                     consider[i] = false;
                     flag = true;
                     break;
@@ -48,30 +49,20 @@ public final class Finitary extends Analysis {
                     j++;
                 }
             }
-            if (j == aprod.length) {
+            if (j == prods.length) {
                 consider[i] = false;
             }
         }
         return flag;
     }
 
-    public boolean at(int i) {
-        return grammar.isTerminal(i) || finitary[i];
+    public boolean isAt(int i) {
+        return grammar.isTerminal(i) || finitaries[i];
     }
 
     public void display(Writer writer) throws IOException {
         writer.write("Finitary = {");
-        int i = 0;
-        for (int j = 0; j < numNTs; j++) {
-            if (!at(j)) {
-                continue;
-            }
-            if (i > 0) {
-                writer.write(", ");
-            }
-            writer.write(grammar.getSymbol(j).getName());
-            i++;
-        }
+        super.display(writer, numNTs, grammar);
         writer.write("}\n");
     }
 }

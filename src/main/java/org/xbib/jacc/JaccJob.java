@@ -13,14 +13,18 @@ import org.xbib.jacc.grammar.Parser;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
+/**
+ *
+ */
 class JaccJob extends Phase {
 
-    private Settings settings;
+    private JaccSettings jaccSettings;
 
     private JaccParser parser;
 
@@ -30,15 +34,15 @@ class JaccJob extends Phase {
 
     private Writer out;
 
-    JaccJob(Handler handler, Writer out, Settings settings) {
+    JaccJob(Handler handler, Writer out, JaccSettings jaccSettings) {
         super(handler);
         this.out = out;
-        this.settings = settings;
-        this.parser = new JaccParser(handler, settings);
+        this.jaccSettings = jaccSettings;
+        this.parser = new JaccParser(handler, jaccSettings);
     }
 
-    Settings getSettings() {
-        return settings;
+    JaccSettings getJaccSettings() {
+        return jaccSettings;
     }
 
     JaccTables getTables() {
@@ -49,23 +53,62 @@ class JaccJob extends Phase {
         return resolver;
     }
 
-    private JaccLexer lexerFromFile(String s) {
-        JaccLexer jacclexer;
-        try {
-            Reader filereader = new InputStreamReader(new FileInputStream(s), StandardCharsets.UTF_8);
-            jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), s, filereader));
-            jacclexer.nextToken();
-            return jacclexer;
-        } catch (IOException e) {
-            report(new Failure("Could not open file \"" + s + "\""));
-            return null;
+    void parseGrammarStream(InputStream inputStream) throws IOException {
+        JaccLexer jacclexer = lexerFromInputStream(inputStream);
+        if (jacclexer != null) {
+            parser.parse(jacclexer);
+            jacclexer.close();
         }
     }
 
-    void parseGrammarFile(String s) throws IOException {
+    private JaccLexer lexerFromFile(String s) throws IOException {
+        JaccLexer jacclexer;
+        Reader filereader = new InputStreamReader(new FileInputStream(s), StandardCharsets.UTF_8);
+        jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), filereader));
+        jacclexer.nextToken();
+        return jacclexer;
+    }
+
+    private JaccLexer lexerFromInputStream(InputStream inputStream) throws IOException {
+        JaccLexer jacclexer;
+        Reader filereader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), filereader));
+        jacclexer.nextToken();
+        return jacclexer;
+    }
+
+    void readErrorExamples(String s) throws IOException {
+        out.write("Reading error examples from \"" + s + "\"");
         JaccLexer jacclexer = lexerFromFile(s);
         if (jacclexer != null) {
-            parser.parse(jacclexer);
+            parser.parseErrorExamples(jacclexer, this);
+            jacclexer.close();
+        }
+    }
+
+    void readErrorExamples(InputStream inputStream) throws IOException {
+        JaccLexer jacclexer = lexerFromInputStream(inputStream);
+        if (jacclexer != null) {
+            parser.parseErrorExamples(jacclexer, this);
+            jacclexer.close();
+        }
+    }
+
+    void readRunExample(String s, boolean flag) throws IOException {
+        out.write("Running example from \"" + s + "\"]\n");
+        JaccLexer jacclexer = lexerFromFile(s);
+        if (jacclexer != null) {
+            runExample(parser.parseSymbols(jacclexer), flag);
+            jacclexer.close();
+        }
+    }
+
+    void readRunExample(InputStream inputStream, boolean flag) throws IOException {
+        out.write("Running example from input stream\n");
+        JaccLexer jacclexer = lexerFromInputStream(inputStream);
+        if (jacclexer != null) {
+            runExample(parser.parseSymbols(jacclexer), flag);
+            jacclexer.close();
         }
     }
 
@@ -74,9 +117,9 @@ class JaccJob extends Phase {
         if (grammar == null || !allDeriveFinite(grammar)) {
             return;
         }
-        LookaheadMachine lookaheadmachine = settings.makeMachine(grammar);
-        resolver = new JaccResolver(lookaheadmachine);
-        tables = new JaccTables(lookaheadmachine, resolver);
+        LookaheadMachine lookaheadmachine = jaccSettings.makeMachine(grammar);
+        this.resolver = new JaccResolver(lookaheadmachine);
+        this.tables = new JaccTables(lookaheadmachine, resolver);
         if (tables.getProdUnused() > 0) {
             report(new Warning(tables.getProdUnused() + " rules never reduced"));
         }
@@ -93,7 +136,7 @@ class JaccJob extends Phase {
         Finitary finitary = grammar.getFinitary();
         boolean flag = true;
         for (int i = 0; i < grammar.getNumNTs(); i++) {
-            if (!finitary.at(i)) {
+            if (!finitary.isAt(i)) {
                 flag = false;
                 report(new Failure("No finite strings can be derived for " +
                         grammar.getNonterminal(i)));
@@ -102,15 +145,7 @@ class JaccJob extends Phase {
         return flag;
     }
 
-    void readRunExample(String s, boolean flag) throws IOException {
-        out.write("Running example from \"" + s + "\"]\n");
-        JaccLexer jacclexer = lexerFromFile(s);
-        if (jacclexer != null) {
-            runExample(parser.parseSymbols(jacclexer), flag);
-        }
-    }
-
-    private void runExample(int ai[], boolean flag) throws IOException {
+    private void runExample(int[] ai, boolean flag) throws IOException {
         Grammar grammar = parser.getGrammar();
         Parser parser1 = new Parser(tables, ai);
         out.write("start ");
@@ -142,30 +177,22 @@ class JaccJob extends Phase {
         } while (true);
     }
 
-    void readErrorExamples(String s) throws IOException {
-        out.write("Reading error examples from \"" + s + "\"");
-        JaccLexer jacclexer = lexerFromFile(s);
-        if (jacclexer != null) {
-            parser.parseErrorExamples(jacclexer, this);
-        }
-    }
-
-    void errorExample(Position position, String s, int ai[]) {
-        Parser parser1 = new Parser(tables, ai);
+    void errorExample(Position position, String s, int[] ai) {
+        Parser p = new Parser(tables, ai);
         int i;
         do {
-            i = parser1.step();
+            i = p.step();
         } while (i != 0 && i != 1);
         if (i == 0) {
             report(new Warning(position, "Example for \"" + s + "\" does not produce an error"));
         } else {
             Grammar grammar = tables.getMachine().getGrammar();
-            int j = parser1.getNextSymbol();
+            int j = p.getNextSymbol();
             if (grammar.isNonterminal(j)) {
                 report(new Warning(position,
                         "Example for \"" + s + "\" reaches an error at the nonterminal " + grammar.getSymbol(j)));
             } else {
-                int k = parser1.getState();
+                int k = p.getState();
                 if (!tables.errorAt(k, j)) {
                     report(new Failure(position, "Error example results in internal error"));
                 } else {

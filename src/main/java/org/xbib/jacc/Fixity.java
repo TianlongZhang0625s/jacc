@@ -52,6 +52,7 @@ class Fixity {
         return obj instanceof Fixity && equalsFixity((Fixity) obj);
     }
 
+    @Override
     public int hashCode() {
         return assoc ^ prec;
     }

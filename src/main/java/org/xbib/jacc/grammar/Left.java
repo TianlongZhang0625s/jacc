@@ -25,6 +25,11 @@ final class Left extends Analysis {
         bottomUp();
     }
 
+    @Override
+    public boolean isAt(int i) {
+        return false;
+    }
+
     protected boolean analyze(int i) {
         boolean flag = false;
         Grammar.Prod aprod[] = grammar.getProds(i);

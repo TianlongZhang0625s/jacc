@@ -9,7 +9,7 @@ import java.io.Writer;
 /**
  *
  */
-class TextOutput extends Output {
+class TextOutput extends AbstractOutput {
 
     private boolean wantFirst;
 
@@ -20,6 +20,7 @@ class TextOutput extends Output {
         tables.analyzeRows();
     }
 
+    @Override
     public void write(Writer writer) throws IOException {
         datestamp(writer);
         for (int i = 0; i < numStates; i++) {
@@ -33,10 +34,10 @@ class TextOutput extends Output {
                 writer.write("\n");
             }
             writer.write("\n");
-            byte abyte0[] = tables.getActionAt(i);
-            int ai1[] = tables.getArgAt(i);
+            byte[] abyte0 = tables.getActionAt(i);
+            int[] ai1 = tables.getArgAt(i);
             int j1 = tables.getDefaultRowAt(i);
-            int ai2[] = tables.indexAt(i);
+            int[] ai2 = tables.indexAt(i);
             for (int k1 = 0; k1 < abyte0.length; k1++) {
                 int l1 = ai2[k1];
                 if (j1 < 0 || abyte0[l1] != abyte0[j1] || ai1[l1] != ai1[j1]) {
@@ -54,7 +55,7 @@ class TextOutput extends Output {
                 writer.write(describeAction(i, abyte0[j1], ai1[j1]) + "\n");
             }
             writer.write("\n");
-            int ai3[] = machine.getGotosAt(i);
+            int[] ai3 = machine.getGotosAt(i);
             if (ai3.length <= 0) {
                 continue;
             }
@@ -77,10 +78,10 @@ class TextOutput extends Output {
         }
         if (tables.getProdUnused() > 0) {
             for (int j = 0; j < numNTs; j++) {
-                boolean aflag[] = tables.getProdsUsedAt(j);
+                boolean[] aflag = tables.getProdsUsedAt(j);
                 for (int l = 0; l < aflag.length; l++) {
                     if (!aflag[l]) {
-                        int ai[] = grammar.getProds(j)[l].getRhs();
+                        int[] ai = grammar.getProds(j)[l].getRhs();
                         writer.write("Rule not reduced: ");
                         writer.write(grammar.getNonterminal(j).getName());
                         writer.write(" : ");

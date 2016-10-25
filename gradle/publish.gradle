@@ -52,8 +52,8 @@ task sonaTypeUpload(type: Upload) {
                     }
                     licenses {
                         license {
-                            name 'The Apache License, Version 2.0'
-                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            name 'BSD 3-Clause License'
+                            url 'https://opensource.org/licenses/BSD-3-Clause'
                         }
                     }
                 }
@@ -77,6 +77,15 @@ task hbzUpload(type: Upload) {
                     authentication(userName: hbzUserName, privateKey: hbzPrivateKey)
                 }
                 pom.project {
+                    name name
+                    description description
+                    packaging 'jar'
+                    inceptionYear '2012'
+                    url scmUrl
+                    organization {
+                        name 'xbib'
+                        url 'http://xbib.org'
+                    }
                     developers {
                         developer {
                             id 'jprante'
@@ -86,15 +95,14 @@ task hbzUpload(type: Upload) {
                         }
                     }
                     scm {
-                        url 'https://github.com/xbib/groovy-webapp'
-                        connection 'scm:git:git://github.com/xbib/groovy-webapp.git'
-                        developerConnection 'scm:git:git://github.com/xbib/groovy-webapp.git'
+                        url scmUrl
+                        connection scmConnection
+                        developerConnection scmDeveloperConnection
                     }
-                    inceptionYear '2016'
                     licenses {
                         license {
-                            name 'The Apache License, Version 2.0'
-                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            name 'BSD 3-Clause License'
+                            url 'https://opensource.org/licenses/BSD-3-Clause'
                         }
                     }
                 }

@@ -4,198 +4,248 @@ import org.xbib.jacc.compiler.ConsoleHandler;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  */
 public class Jacc {
 
+    private static final Logger logger = Logger.getLogger(Jacc.class.getName());
+
+    private String className;
+    private InputStream inputStream;
+    private InputStream errorDiagnostics;
+    private InputStream parserInputs;
+    private OutputStream outputStream;
+    private String suffix;
+    private JaccSettings jaccSettings;
+    private boolean enableParserOutput;
+    private boolean enableTokenOutput;
+    private boolean enableVerboseMachineDescription;
+    private boolean includeCalculations;
+    private boolean includeStateNumbers;
+    private String dir;
+
     public Jacc() {
+        this.className = null;
+        this.inputStream = null;
+        this.suffix = ".jacc";
+        this.jaccSettings = new JaccSettings();
+        this.enableParserOutput = true;
+        this.enableTokenOutput = true;
+        this.enableVerboseMachineDescription = false;
+        this.includeCalculations = false;
+        this.errorDiagnostics = null;
+        this.parserInputs = null;
+        this.includeStateNumbers = false;
+        this.dir = null;
+        this.outputStream = System.out;
+    }
+
+    public void setIncludeCalculations(boolean includeCalculations) {
+        this.includeCalculations = includeCalculations;
+    }
+
+    public void setEnableParserOutput(boolean enableParserOutput) {
+        this.enableParserOutput = enableParserOutput;
+    }
+
+    public void setEnableTokenOutput(boolean enableTokenOutput) {
+        this.enableTokenOutput = enableTokenOutput;
+    }
+
+    public void setEnableVerboseMachineDescription(boolean enableVerboseMachineDescription) {
+        this.enableVerboseMachineDescription = enableVerboseMachineDescription;
+    }
+
+    public void setMachineType(MachineType machineType) {
+        jaccSettings.setMachineType(machineType);
+    }
+
+    public void setIncludeStateNumbers(boolean includeStateNumbers) {
+        this.includeStateNumbers = includeStateNumbers;
+    }
+
+    public void setName(String name) {
+        this.className = name;
+    }
+
+    public void setInputStream(InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public InputStream getInputStream() {
+        return inputStream;
+    }
+
+    public void setErrorDiagnostics(InputStream errorDiagnostics) {
+        this.errorDiagnostics = errorDiagnostics;
+    }
+
+    public InputStream getErrorDiagnostics() {
+        return errorDiagnostics;
+    }
+
+    public void setParserInputs(InputStream parserInputs) {
+        this.parserInputs = parserInputs;
+    }
+
+    public InputStream getParserInputs() {
+        return parserInputs;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setDir(String dir) {
+        this.dir = dir;
+    }
+
+    public void setOutputStream(OutputStream outputStream) {
+        this.outputStream = outputStream;
     }
 
     public static void main(String[] args) throws Exception {
-        NameList namelist = null;
-        String s = ".jacc";
-        Settings settings = new Settings();
-        boolean flag = true;
-        boolean flag1 = true;
-        boolean flag2 = false;
-        boolean flag4 = false;
-        NameList namelist1 = null;
-        NameList namelist2 = null;
-        boolean flag5 = false;
-        String dir = null;
-        Writer writer = new BufferedWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8));
-        label0:
+        Jacc jacc = new Jacc();
         for (int i = 0; i < args.length; i++) {
-            String s1 = args[i];
-            if (s1.startsWith("-")) {
-                if (s1.length() == 1) {
+            String arg = args[i];
+            if (arg.startsWith("-")) {
+                if (arg.length() == 1) {
                     usage("Missing command line options");
                 }
                 int j = 1;
-                do {
-                    if (j >= s1.length()) {
-                        continue label0;
-                    }
-                    switch (s1.charAt(j)) {
-                        case 102: // 'f'
-                            flag4 = true;
+                while (j < arg.length()) {
+                    switch (arg.charAt(j)) {
+                        case 'f':
+                            jacc.setIncludeCalculations(true);
                             break;
-
-                        case 112: // 'p'
-                            flag = false;
+                        case 'p':
+                            jacc.setEnableParserOutput(false);
                             break;
-
-                        case 116: // 't'
-                            flag1 = false;
+                        case 't':
+                            jacc.setEnableTokenOutput(false);
                             break;
-
-                        case 118: // 'v'
-                            flag2 = true;
+                        case 'v':
+                            jacc.setEnableVerboseMachineDescription(true);
                             break;
-
-                        case 48: // '0'
-                            settings.setMachineType(0);
+                        case '0':
+                            jacc.setMachineType(MachineType.LR0);
                             break;
-
-                        case 115: // 's'
-                            settings.setMachineType(1);
+                        case 's':
+                            jacc.setMachineType(MachineType.SLR1);
                             break;
-
-                        case 97: // 'a'
-                            settings.setMachineType(2);
+                        case 'a':
+                            jacc.setMachineType(MachineType.LALR1);
                             break;
-
-                        case 101: // 'e'
+                        case 'n':
+                            jacc.setIncludeStateNumbers(true);
+                            break;
+                        case 'e':
                             if (i + 1 >= args.length) {
                                 usage("Missing filename for -e option");
                             }
-                            namelist1 = new NameList(args[++i], namelist1);
+                            jacc.setErrorDiagnostics(Files.newInputStream(Paths.get(args[++i])));
                             break;
-
-                        case 114: // 'r'
+                        case 'r':
                             if (i + 1 >= args.length) {
                                 usage("Missing filename for -r option");
                             }
-                            namelist2 = new NameList(args[++i], namelist2);
+                            jacc.setParserInputs(Files.newInputStream(Paths.get(args[++i])));
                             break;
-
-                        case 110: // 'n'
-                            flag5 = true;
-                            break;
-
                         case 'd':
                             if (i + 1 >= args.length) {
                                 usage("Missing directory for -d option");
                             }
-                            dir = args[++i];
+                            jacc.setDir(args[++i]);
                             break;
-
+                        case 'o':
+                            if (i + 1 >= args.length) {
+                                usage("Missing filename for -o option");
+                            }
+                            jacc.setOutputStream(Files.newOutputStream(Paths.get(args[++i])));
+                            break;
                         default:
-                            usage("Unrecognized command line option " + s1.charAt(j));
+                            usage("Unrecognized command line option " + arg.charAt(j));
                             break;
                     }
                     j++;
-                } while (true);
+                }
             }
-            if (!s1.endsWith(s)) {
-                usage("Input file must have \"" + s + "\" suffix");
+            if (!arg.endsWith(jacc.getSuffix())) {
+                usage("Input file must have \"" + jacc.getSuffix() + "\" suffix");
             } else {
-                namelist = new NameList(s1, namelist);
+                jacc.setInputStream(Files.newInputStream(Paths.get(arg)));
             }
         }
-
-        if (namelist == null) {
+        if (jacc.getInputStream() == null) {
             usage("No input file(s) specified");
+        } else {
+            jacc.execute();
         }
-        ConsoleHandler simplehandler = new ConsoleHandler();
-        String s2 = namelist.getFirst();
-        int k = 1 + Math.max(s2.lastIndexOf('\\'), s2.lastIndexOf('/'));
-        dir = dir == null ? s2.substring(0, k) : dir;
-        String s4 = s2.substring(k, s2.length() - s.length());
-        final JaccJob job = new JaccJob(simplehandler, writer, settings);
-        NameList.visit(namelist, new NameList.Visitor() {
-            public void visit(String s5) throws IOException {
-                job.parseGrammarFile(s5);
-            }
-        });
+    }
+
+    public void execute() throws IOException {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        if (dir == null) {
+            dir = ".";
+        }
+        if (!dir.endsWith("/")) {
+            dir = dir + "/";
+        }
+        final JaccJob job = new JaccJob(consoleHandler, writer, jaccSettings);
+        job.parseGrammarStream(inputStream);
         job.buildTables();
-        settings.fillBlanks(s4);
-        NameList.visit(namelist1, new NameList.Visitor() {
-            public void visit(String s5) throws IOException {
-                job.readErrorExamples(s5);
+        jaccSettings.fillBlanks(className);
+        if (errorDiagnostics != null) {
+            job.readErrorExamples(errorDiagnostics);
+        }
+        if (consoleHandler.getNumFailures() == 0) {
+            if (enableParserOutput) {
+                (new ParserOutput(consoleHandler, job)).write(dir + jaccSettings.getClassName() + ".java");
             }
-        });
-        if (simplehandler.getNumFailures() > 0) {
-            return;
-        }
-        if (flag) {
-            (new ParserOutput(simplehandler, job)).write(dir + settings.getClassName() + ".java");
-        }
-        if (flag1) {
-            (new TokensOutput(simplehandler, job)).write(dir + settings.getInterfaceName() + ".java");
-        }
-        if (flag2) {
-            (new TextOutput(simplehandler, job, flag4)).write(dir + s4 + ".output");
-        }
-        final boolean showState = flag5;
-        NameList.visit(namelist2, new NameList.Visitor() {
-            public void visit(String s5) throws IOException {
-                job.readRunExample(s5, showState);
+            if (enableTokenOutput) {
+                (new TokensOutput(consoleHandler, job)).write(dir + jaccSettings.getInterfaceName() + ".java");
             }
-        });
+            if (enableVerboseMachineDescription) {
+                (new TextOutput(consoleHandler, job, includeCalculations)).write(dir + jaccSettings.getClassName() + ".output");
+            }
+            if (parserInputs != null) {
+                job.readRunExample(parserInputs, includeStateNumbers);
+            }
+        } else {
+            writer.write("There were failures.\n");
+        }
+        writer.close();
     }
 
     private static void usage(String s) {
-        System.err.println(s);
-        System.err.println("usage: jacc [options] file.jacc ...");
-        System.err.println("options (individually, or in combination):");
-        System.err.println(" -p        do not generate parser");
-        System.err.println(" -t        do not generate token specification");
-        System.err.println(" -v        output text description of machine");
-        System.err.println(" -f        show first/follow sets (with -h or -v)");
-        System.err.println(" -a        treat as LALR(1) grammar (default)");
-        System.err.println(" -s        treat as SLR(1) grammar");
-        System.err.println(" -0        treat as LR(0) grammar");
-        System.err.println(" -r file   run parser on input in file");
-        System.err.println(" -n        show state numbers in parser output");
-        System.err.println(" -e file   read error cases from file");
-        System.err.println(" -d dir    output files to directory");
-        System.exit(1);
-    }
-
-    private static class NameList {
-
-        String name;
-        NameList names;
-
-        NameList(String s, NameList namelist) {
-            name = s;
-            names = namelist;
-        }
-
-        static void visit(NameList namelist, Visitor visitor) throws IOException {
-            if (namelist != null) {
-                visit(namelist.names, visitor);
-                visitor.visit(namelist.name);
-            }
-        }
-
-        String getFirst() {
-            NameList namelist;
-            namelist = this;
-            while (namelist.names != null) {
-                namelist = namelist.names;
-            }
-            return namelist.name;
-        }
-
-        interface Visitor {
-            void visit(String s) throws IOException;
-        }
+        logger.log(Level.INFO, s);
+        String mesg = "usage: jacc [options] file.jacc ...\n" +
+                "options (individually, or in combination):\n" +
+                " -p        do not generate parser\n" +
+                " -t        do not generate token specification\n" +
+                " -v        output text description of machine\n" +
+                " -f        show first/follow sets (with -h or -v)\n" +
+                " -a        treat as LALR(1) grammar (default)\n" +
+                " -s        treat as SLR(1) grammar\n" +
+                " -0        treat as LR(0) grammar\n" +
+                " -r file   run parser on input in file\n" +
+                " -n        show state numbers in parser output\n" +
+                " -e file   read error cases from file\n" +
+                " -d dir    output files to directory\n" +
+                " -o file   name of output file for parser runs\n";
+        logger.log(Level.INFO, mesg);
     }
 }
+

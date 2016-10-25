@@ -19,8 +19,8 @@ class JaccTables extends Tables {
 
     JaccTables(LookaheadMachine lookaheadmachine, Resolver resolver) {
         super(lookaheadmachine, resolver);
-        errors = null;
-        numErrors = 0;
+        this.errors = null;
+        this.numErrors = 0;
     }
 
     int getNumErrors() {
@@ -50,8 +50,10 @@ class JaccTables extends Tables {
                 return i;
             }
         }
-        String as[] = new String[numErrors != 0 ? 2 * numErrors : 1];
-        System.arraycopy(errors, 0, as, 0, numErrors);
+        String[] as = new String[numErrors != 0 ? 2 * numErrors : 1];
+        if (errors != null) {
+            System.arraycopy(errors, 0, as, 0, numErrors);
+        }
         errors = as;
         errors[numErrors] = s;
         return numErrors++;
@@ -132,7 +134,8 @@ class JaccTables extends Tables {
             defaultRow[i] = findDefault();
         }
 
-        private void heapify(int i) {
+        private void heapify(int pos) {
+            int i = pos;
             int j = i;
             int k = idx[j];
             do {

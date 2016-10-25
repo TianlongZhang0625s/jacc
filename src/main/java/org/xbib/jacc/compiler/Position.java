@@ -3,9 +3,9 @@ package org.xbib.jacc.compiler;
 /**
  *
  */
-public abstract class Position {
+public interface Position {
 
-    public abstract String describe();
+    String describe();
 
-    public abstract Position copy();
+    Position copy();
 }

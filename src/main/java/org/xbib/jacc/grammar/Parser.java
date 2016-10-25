@@ -14,7 +14,7 @@ public class Parser {
     private static final int GOTO = 3;
     private static final int REDUCE = 4;
     private Tables tables;
-    private int input[];
+    private int[] input;
     private Machine machine;
     private Grammar grammar;
     private int position;
@@ -23,16 +23,16 @@ public class Parser {
     private Stack stack;
     private int state;
 
-    public Parser(Tables tables, int ai[]) {
-        position = 0;
-        currSymbol = -1;
-        reducedNT = -1;
-        stack = new Stack();
-        state = ACCEPT;
+    public Parser(Tables tables, int[] ai) {
+        this.position = 0;
+        this.currSymbol = -1;
+        this.reducedNT = -1;
+        this.stack = new Stack();
+        this.state = ACCEPT;
         this.tables = tables;
-        input = ai;
-        machine = tables.getMachine();
-        grammar = machine.getGrammar();
+        this.input = ai;
+        this.machine = tables.getMachine();
+        this.grammar = machine.getGrammar();
     }
 
     public int getState() {
@@ -84,6 +84,8 @@ public class Parser {
             case 2:
                 reduce(ai[i]);
                 return REDUCE;
+            default:
+                break;
         }
         return ERROR;
     }
@@ -106,7 +108,7 @@ public class Parser {
     }
 
     private boolean gotoState(int i) {
-        int ai[] = machine.getGotosAt(state);
+        int[] ai = machine.getGotosAt(state);
         for (int anAi : ai) {
             if (i == machine.getEntry(anAi)) {
                 state = anAi;
@@ -122,18 +124,21 @@ public class Parser {
             writer.write(state);
             writer.write(" ");
         }
-        writer.write("_ ");
+        writer.write("_");
         if (reducedNT >= 0) {
+            writer.write(" ");
             writer.write(grammar.getSymbol(reducedNT).toString());
             writer.write(" ");
         }
         if (currSymbol >= 0) {
+            writer.write(" ");
             writer.write(grammar.getSymbol(currSymbol).toString());
             if (position < input.length) {
                 writer.write(" ...");
             }
         } else {
             if (position < input.length) {
+                writer.write(" ");
                 writer.write(grammar.getSymbol(input[position]).toString());
                 writer.write(" ...");
             }

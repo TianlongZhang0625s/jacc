@@ -1,5 +1,6 @@
 package org.xbib.jacc.grammar;
 
+import org.xbib.jacc.JaccException;
 import org.xbib.jacc.util.BitSet;
 import org.xbib.jacc.util.Interator;
 import org.xbib.jacc.util.SCC;
@@ -25,7 +26,7 @@ public class Grammar {
     private First first;
     private Follow follow;
 
-    public Grammar(Symbol[] symbols, Prod[][] prods) throws Exception {
+    public Grammar(Symbol[] symbols, Prod[][] prods) throws JaccException {
         validate(symbols, prods);
         this.symbols = symbols;
         numSyms = symbols.length;
@@ -36,37 +37,37 @@ public class Grammar {
         comps = SCC.get(depends, revdeps, numNTs);
     }
 
-    private static void validate(Symbol[] symbol, Prod[][] prod) throws Exception {
+    private static void validate(Symbol[] symbol, Prod[][] prod) throws JaccException {
         if (symbol == null || symbol.length == 0) {
-            throw new Exception("No symbols specified");
+            throw new JaccException("No symbols specified");
         }
         for (int i = 0; i < symbol.length; i++) {
             if (symbol[i] == null) {
-                throw new Exception("Symbol " + i + " is null");
+                throw new JaccException("Symbol " + i + " is null");
             }
         }
         int j = symbol.length;
         if (prod == null || prod.length == 0) {
-            throw new Exception("No nonterminals specified");
+            throw new JaccException("No nonterminals specified");
         }
         if (prod.length > j) {
-            throw new Exception("To many nonterminals specified");
+            throw new JaccException("To many nonterminals specified");
         }
         if (prod.length == j) {
-            throw new Exception("No terminals specified");
+            throw new JaccException("No terminals specified");
         }
         for (int k = 0; k < prod.length; k++) {
             if (prod[k] == null || prod[k].length == 0) {
-                throw new Exception("Nonterminal " + symbol[k] + " (number " + k + ") has no productions");
+                throw new JaccException("Nonterminal " + symbol[k] + " (number " + k + ") has no productions");
             }
             for (int l = 0; l < prod[k].length; l++) {
                 int[] ai = prod[k][l].getRhs();
                 if (ai == null) {
-                    throw new Exception("Production " + l + " for symbol " + symbol[k] + " (number " + k + ") is null");
+                    throw new JaccException("Production " + l + " for symbol " + symbol[k] + " (number " + k + ") is null");
                 }
                 for (int m : ai) {
                     if (m < 0 || m >= j - 1) {
-                        throw new Exception("Out of range symbol " + m + " in production " + l + " for symbol " +
+                        throw new JaccException("Out of range symbol " + m + " in production " + l + " for symbol " +
                                 symbol[k] + " (number " + k + ")");
                     }
                 }
@@ -227,7 +228,7 @@ public class Grammar {
         int j = 0;
         for (Interator interator = BitSet.interator(ai, i); interator.hasNext();
              sb.append(symbols[interator.next()].getName())) {
-            if (j++ != 0) {
+            if (j++ > 0) {
                 sb.append(", ");
             }
         }
@@ -239,7 +240,7 @@ public class Grammar {
      */
     public static class Prod {
 
-        int[] rhs;
+        private int[] rhs;
         private int seqNo;
 
         public Prod(int[] ai, int i) {

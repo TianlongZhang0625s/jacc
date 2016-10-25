@@ -3,7 +3,7 @@ package org.xbib.jacc.compiler;
 /**
  *
  */
-class SourcePosition extends Position {
+class SourcePosition implements Position {
 
     private final Source source;
 
@@ -30,9 +30,6 @@ class SourcePosition extends Position {
     public String describe() {
         StringBuilder sb = new StringBuilder();
         if (source != null) {
-            sb.append('"');
-            sb.append(source.describe());
-            sb.append('"');
             if (row > 0) {
                 sb.append(", ");
             }

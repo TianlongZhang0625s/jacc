@@ -14,7 +14,7 @@ public class Follow extends Analysis {
     private Nullable nullable;
     private First first;
     private int numNTs;
-    private int[][] follow;
+    private int[][] follows;
 
     Follow(Grammar grammar, Nullable nullable, First first1) {
         super(grammar.getComponents());
@@ -23,17 +23,23 @@ public class Follow extends Analysis {
         first = first1;
         numNTs = grammar.getNumNTs();
         int numTs = grammar.getNumTs();
-        follow = new int[numNTs][];
+        follows = new int[numNTs][];
         for (int i = 0; i < numNTs; i++) {
-            follow[i] = BitSet.make(numTs);
+            follows[i] = BitSet.make(numTs);
         }
-        BitSet.set(follow[0], numTs - 1);
+        BitSet.set(follows[0], numTs - 1);
         topDown();
     }
 
+    @Override
+    public boolean isAt(int i) {
+        return false;
+    }
+
+    @Override
     protected boolean analyze(int i) {
         boolean flag = false;
-        Grammar.Prod aprod[] = grammar.getProds(i);
+        Grammar.Prod[] aprod = grammar.getProds(i);
         for (Grammar.Prod anAprod : aprod) {
             int[] ai = anAprod.getRhs();
             for (int k = 0; k < ai.length; k++) {
@@ -46,20 +52,20 @@ public class Follow extends Analysis {
                         break;
                     }
                     if (grammar.isTerminal(ai[l])) {
-                        if (BitSet.addTo(follow[ai[k]], ai[l] - numNTs)) {
+                        if (BitSet.addTo(follows[ai[k]], ai[l] - numNTs)) {
                             flag = true;
                         }
                         break;
                     }
-                    if (BitSet.addTo(follow[ai[k]], first.at(ai[l]))) {
+                    if (BitSet.addTo(follows[ai[k]], first.at(ai[l]))) {
                         flag = true;
                     }
-                    if (!nullable.at(ai[l])) {
+                    if (!nullable.isAt(ai[l])) {
                         break;
                     }
                     l++;
                 } while (true);
-                if (l >= ai.length && BitSet.addTo(follow[ai[k]], follow[i])) {
+                if (l >= ai.length && BitSet.addTo(follows[ai[k]], follows[i])) {
                     flag = true;
                 }
             }
@@ -68,12 +74,12 @@ public class Follow extends Analysis {
     }
 
     public int[] at(int i) {
-        return follow[i];
+        return follows[i];
     }
 
     public void display(Writer writer) throws IOException {
         writer.write("Follow sets:\n");
-        for (int i = 0; i < follow.length; i++) {
+        for (int i = 0; i < follows.length; i++) {
             writer.write(" Follow(" + grammar.getSymbol(i) + "): {");
             writer.write(grammar.displaySymbolSet(at(i), numNTs));
             writer.write("}\n");

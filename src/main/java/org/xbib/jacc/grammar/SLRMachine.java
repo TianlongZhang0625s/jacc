@@ -19,6 +19,7 @@ public class SLRMachine extends LookaheadMachine {
         calcLookahead();
     }
 
+    @Override
     public int[] getLookaheadAt(int i, int j) {
         return laReds[i][j];
     }
@@ -36,6 +37,7 @@ public class SLRMachine extends LookaheadMachine {
         }
     }
 
+    @Override
     public void display(Writer writer) throws IOException {
         super.display(writer);
         for (int i = 0; i < numStates; i++) {

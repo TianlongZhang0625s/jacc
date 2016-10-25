@@ -13,7 +13,7 @@ public class First extends Analysis {
     private Grammar grammar;
     private Nullable nullable;
     private int numNTs;
-    private int[][] first;
+    private int[][] firsts;
 
     First(Grammar grammar1, Nullable nullable1) {
         super(grammar1.getComponents());
@@ -21,13 +21,19 @@ public class First extends Analysis {
         nullable = nullable1;
         numNTs = grammar1.getNumNTs();
         int numTs = grammar1.getNumTs();
-        first = new int[numNTs][];
+        firsts = new int[numNTs][];
         for (int i = 0; i < numNTs; i++) {
-            first[i] = BitSet.make(numTs);
+            firsts[i] = BitSet.make(numTs);
         }
         bottomUp();
     }
 
+    @Override
+    public boolean isAt(int i) {
+        return false;
+    }
+
+    @Override
     protected boolean analyze(int i) {
         boolean flag = false;
         Grammar.Prod[] aprod = grammar.getProds(i);
@@ -40,15 +46,15 @@ public class First extends Analysis {
                     continue label0;
                 }
                 if (grammar.isTerminal(ai[k])) {
-                    if (BitSet.addTo(first[i], ai[k] - numNTs)) {
+                    if (BitSet.addTo(firsts[i], ai[k] - numNTs)) {
                         flag = true;
                     }
                     continue label0;
                 }
-                if (BitSet.addTo(first[i], first[ai[k]])) {
+                if (BitSet.addTo(firsts[i], firsts[ai[k]])) {
                     flag = true;
                 }
-                if (!nullable.at(ai[k])) {
+                if (!nullable.isAt(ai[k])) {
                     continue label0;
                 }
                 k++;
@@ -59,12 +65,12 @@ public class First extends Analysis {
     }
 
     public int[] at(int i) {
-        return first[i];
+        return firsts[i];
     }
 
     public void display(Writer writer) throws IOException {
         writer.write("First sets:\n");
-        for (int i = 0; i < first.length; i++) {
+        for (int i = 0; i < firsts.length; i++) {
             writer.write(" First(" + grammar.getSymbol(i) + "): {");
             writer.write(grammar.displaySymbolSet(at(i), numNTs));
             writer.write("}\n");

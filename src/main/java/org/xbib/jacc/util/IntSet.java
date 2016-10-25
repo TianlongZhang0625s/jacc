@@ -115,11 +115,13 @@ public class IntSet {
     public void display(Writer writer) throws IOException {
         Interator interator1 = interator();
         writer.write("{");
-        for (int i = 0; interator1.hasNext(); i++) {
+        int i = 0;
+        while (interator1.hasNext()) {
             if (i != 0) {
                 writer.write(", ");
             }
             writer.write(interator1.next());
+            i++;
         }
         writer.write("}");
         writer.write(": used = " + used + ", length = " + elems.length + "\n");

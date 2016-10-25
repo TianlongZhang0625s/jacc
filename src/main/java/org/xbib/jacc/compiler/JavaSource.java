@@ -8,30 +8,24 @@ import java.io.Reader;
  */
 public class JavaSource extends Source {
 
-    private final StringBuilder buf;
+    private final StringBuilder sb;
     private Reader input;
     private int tabwidth;
-    private String description;
     private int c0;
     private int c1;
     private int lineNumber;
 
-    public JavaSource(Handler handler, String s, Reader reader) {
-        this(handler, s, reader, 8);
+    public JavaSource(Handler handler, Reader reader) {
+        this(handler, reader, 8);
     }
 
-    private JavaSource(Handler handler, String s, Reader reader, int i) {
+    private JavaSource(Handler handler, Reader reader, int i) {
         super(handler);
-        c1 = 0;
-        lineNumber = 0;
-        description = s;
-        input = reader;
-        tabwidth = i;
-        buf = new StringBuilder();
-    }
-
-    public String describe() {
-        return description;
+        this.c1 = 0;
+        this.lineNumber = 0;
+        this.input = reader;
+        this.tabwidth = i;
+        this.sb = new StringBuilder();
     }
 
     private void skip() throws IOException {
@@ -49,7 +43,7 @@ public class JavaSource extends Source {
         if (input == null) {
             return null;
         }
-        buf.setLength(0);
+        sb.setLength(0);
         if (lineNumber++ == 0) {
             skip();
             skip();
@@ -77,24 +71,24 @@ public class JavaSource extends Source {
                     if (k != 4) {
                         report(new Warning("Error in Unicode escape sequence"));
                     } else {
-                        buf.append((char) i);
+                        sb.append((char) i);
                     }
                     continue;
                 }
-                buf.append('\\');
+                sb.append('\\');
                 if (c0 == -1) {
                     break;
                 }
-                buf.append((char) c0);
+                sb.append((char) c0);
                 skip();
             } else if (c0 == 9 && tabwidth > 0) {
-                for (int j = tabwidth - buf.length() % tabwidth; j > 0; j--) {
-                    buf.append(' ');
+                for (int j = tabwidth - sb.length() % tabwidth; j > 0; j--) {
+                    sb.append(' ');
                 }
 
                 skip();
             } else {
-                buf.append((char) c0);
+                sb.append((char) c0);
                 skip();
             }
         } while (true);
@@ -104,18 +98,20 @@ public class JavaSource extends Source {
         if (c0 == 10) {
             skip();
         }
-        return buf.toString();
+        return sb.toString();
     }
 
+    @Override
     public int getLineNo() {
         return lineNumber;
     }
 
+    @Override
     public void close() throws IOException {
         if (input != null) {
             input.close();
             input = null;
-            buf.setLength(0);
+            sb.setLength(0);
         }
     }
 }

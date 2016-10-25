@@ -127,12 +127,14 @@ public class Machine {
             }
             int[] ai1 = new int[i];
             int j1 = 0;
-            for (int l1 = 0; j1 < i; l1++) {
+            int l1 = 0;
+            while (j1 < i) {
                 if (aintset[l1] != null) {
                     ai1[j1] = addState(l1, aintset[l1]);
                     aintset[l1] = null;
                     j1++;
                 }
+                l1++;
             }
             i = 0;
             succState[j] = ai1;

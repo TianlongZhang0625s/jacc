@@ -12,9 +12,9 @@ import java.io.Writer;
  */
 public class LALRMachine extends LookaheadMachine {
 
-    private Nullable nullable;
-    private First first;
-    private int[][] predState;
+    private final Nullable nullable;
+    private final First first;
+    private final int[][] predState;
     private int numGotos;
     private int[] stateFirstGoto;
     private int[] gotoSource;
@@ -25,13 +25,14 @@ public class LALRMachine extends LookaheadMachine {
 
     public LALRMachine(Grammar grammar) {
         super(grammar);
-        nullable = grammar.getNullable();
-        first = grammar.getFirst();
-        predState = SCC.invert(succState, numStates);
+        this.nullable = grammar.getNullable();
+        this.first = grammar.getFirst();
+        this.predState = SCC.invert(succState, numStates);
         calcGotoLA();
         calcLookahead();
     }
 
+    @Override
     public int[] getLookaheadAt(int i, int j) {
         return laReds[i][j];
     }
@@ -104,7 +105,8 @@ public class LALRMachine extends LookaheadMachine {
         gotoTargets[i] = intset1.toArray();
     }
 
-    private LR0Items.Item calcFirsts(int[] ai, LR0Items.Item item) {
+    private LR0Items.Item calcFirsts(int[] ai, LR0Items.Item it) {
+        LR0Items.Item item = it;
         do {
             if (!item.canGoto()) {
                 break;
@@ -115,7 +117,7 @@ public class LALRMachine extends LookaheadMachine {
                 break;
             }
             BitSet.union(ai, first.at(i));
-            if (!nullable.at(i)) {
+            if (!nullable.isAt(i)) {
                 break;
             }
             item = items.getItem(item.getNextItem());
@@ -126,7 +128,8 @@ public class LALRMachine extends LookaheadMachine {
         return item;
     }
 
-    private void findTargets(IntSet intset, int i, int j, int[] ai, int k) {
+    private void findTargets(IntSet intset, int i, int j, int[] ai, int kk) {
+        int k = kk;
         if (k == 0) {
             int[] ai1 = getGotosAt(i);
             int i1 = 0;
@@ -164,7 +167,8 @@ public class LALRMachine extends LookaheadMachine {
         }
     }
 
-    private void lookBack(int[] ai, int i, int j, int[] ai1, int k) {
+    private void lookBack(int[] ai, int i, int j, int[] ai1, int kk) {
+        int k = kk;
         if (k == 0) {
             int[] ai2 = getGotosAt(i);
             for (int i1 = 0; i1 < ai2.length; i1++) {

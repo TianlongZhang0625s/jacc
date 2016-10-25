@@ -16,11 +16,12 @@ class JaccProd extends Grammar.Prod {
     JaccProd(Fixity fixity, JaccSymbol[] jaccsymbol, Position position, String s, int i) {
         super(new int[jaccsymbol.length], i);
         this.fixity = fixity;
-        prodSyms = jaccsymbol;
-        actPos = position;
-        action = s;
+        this.prodSyms = jaccsymbol;
+        this.actPos = position;
+        this.action = s;
     }
 
+    @Override
     public String getLabel() {
         return Integer.toString(getSeqNo());
     }

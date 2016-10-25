@@ -15,13 +15,14 @@ public abstract class SourceLexer extends Lexer {
 
     public SourceLexer(Handler handler, Source source) throws IOException {
         super(handler);
-        col = -1;
+        this.col = -1;
         this.source = source;
-        pos = new SourcePosition(source);
-        line = source.readLine();
+        this.pos = new SourcePosition(source);
+        this.line = source.readLine();
         nextChar();
     }
 
+    @Override
     public Position getPos() {
         return pos.copy();
     }
@@ -50,6 +51,7 @@ public abstract class SourceLexer extends Lexer {
         return c;
     }
 
+    @Override
     public void close() throws IOException {
         if (source != null) {
             source.close();

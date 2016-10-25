@@ -1,23 +1,32 @@
 package org.xbib.jacc.compiler;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  */
 public class ConsoleHandler extends Handler {
+
+    private static final Logger logger = Logger.getLogger(ConsoleHandler.class.getName());
+
+    @Override
     protected void respondTo(Diagnostic diagnostic) {
         Position position = diagnostic.getPos();
+        Level level;
+        StringBuilder sb = new StringBuilder();
         if (diagnostic instanceof Warning) {
-            System.err.print("WARNING: ");
+            level = Level.WARNING;
         } else {
-            System.err.print("ERROR: ");
+            level = Level.SEVERE;
         }
         if (position != null) {
-            System.err.println(position.describe());
+            sb.append(position.describe());
         }
         String s = diagnostic.getText();
         if (s != null) {
-            System.err.println(s);
+            sb.append(s);
         }
-        System.err.println();
+        logger.log(level, sb.toString());
     }
 }

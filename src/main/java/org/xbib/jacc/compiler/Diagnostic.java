@@ -5,16 +5,17 @@ package org.xbib.jacc.compiler;
  */
 abstract class Diagnostic extends Exception {
 
-    private String text;
-    private Position position;
+    private final String text;
+    private final transient Position position;
 
     Diagnostic(String s) {
-        text = s;
+        this.position = null;
+        this.text = s;
     }
 
     Diagnostic(Position position, String s) {
         this.position = position;
-        text = s;
+        this.text = s;
     }
 
     String getText() {

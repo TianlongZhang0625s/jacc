@@ -7,12 +7,15 @@ import org.xbib.jacc.grammar.Resolver;
 import org.xbib.jacc.grammar.Tables;
 import org.xbib.jacc.util.IntSet;
 
+/**
+ *
+ */
 class JaccResolver implements Resolver {
 
     private LookaheadMachine machine;
     private int numSRConflicts;
     private int numRRConflicts;
-    private Conflicts conflicts[];
+    private Conflicts[] conflicts;
 
     JaccResolver(LookaheadMachine lookaheadmachine) {
         numSRConflicts = 0;
@@ -49,6 +52,8 @@ class JaccResolver implements Resolver {
                     return;
                 case 3:
                     return;
+                default:
+                    break;
             }
         }
         conflicts[i] = Conflicts.sr(tables.getArgAt(i)[j], k, symbol, conflicts[i]);

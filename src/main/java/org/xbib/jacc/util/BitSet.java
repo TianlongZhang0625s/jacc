@@ -37,7 +37,7 @@ public class BitSet {
 
     public static boolean addTo(int[] ai, int[] ai1) {
         if (ai.length < ai1.length) {
-            throw new Error("bitset arguments do not match");
+            throw new IllegalArgumentException("bitset arguments do not match");
         }
         int i = 0;
         boolean flag = false;
@@ -124,46 +124,5 @@ public class BitSet {
 
     public static Interator interator(int[] ai, int i) {
         return new BitSetInterator(ai, i);
-    }
-
-    private static class BitSetInterator extends Interator {
-
-        int[] set;
-        int pos;
-        int mask;
-        int num;
-        int bitCount;
-
-        BitSetInterator(int[] ai, int i) {
-            set = ai;
-            num = i;
-            pos = 0;
-            mask = 1;
-            bitCount = 0;
-        }
-
-        private void advance() {
-            num++;
-            if (++bitCount == 32) {
-                pos++;
-                bitCount = 0;
-                mask = 1;
-            } else {
-                mask <<= 1;
-            }
-        }
-
-        public int next() {
-            int i = num;
-            advance();
-            return i;
-        }
-
-        public boolean hasNext() {
-            while (pos < set.length && (set[pos] & mask) == 0) {
-                advance();
-            }
-            return pos < set.length;
-        }
     }
 }

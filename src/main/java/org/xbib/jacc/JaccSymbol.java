@@ -51,7 +51,7 @@ class JaccSymbol extends Grammar.Symbol {
             jaccProds = new JaccProd[1];
         } else {
             if (pused >= jaccProds.length) {
-                JaccProd ajaccprod[] = new JaccProd[2 * jaccProds.length];
+                JaccProd[] ajaccprod = new JaccProd[2 * jaccProds.length];
                 System.arraycopy(jaccProds, 0, ajaccprod, 0, jaccProds.length);
 
                 jaccProds = ajaccprod;
@@ -61,7 +61,7 @@ class JaccSymbol extends Grammar.Symbol {
     }
 
     public JaccProd[] getProds() {
-        JaccProd ajaccprod[] = new JaccProd[pused];
+        JaccProd[] ajaccprod = new JaccProd[pused];
         for (int i = 0; i < pused; i++) {
             ajaccprod[i] = jaccProds[i];
             ajaccprod[i].fixup();

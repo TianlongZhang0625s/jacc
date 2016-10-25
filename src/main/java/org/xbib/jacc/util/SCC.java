@@ -49,10 +49,12 @@ public class SCC {
             compNo = new int[i];
         }
 
+        @Override
         void doneVisit(int i) {
             compNo[i] = numComps;
         }
 
+        @Override
         void doneTree() {
             numComps++;
         }
@@ -76,6 +78,7 @@ public class SCC {
     }
 
     private static class ArrangeByFinish extends DepthFirst {
+
         private int dfsNum;
         private int[] order;
 
@@ -85,8 +88,14 @@ public class SCC {
             order = new int[dfsNum];
         }
 
+        @Override
         void doneVisit(int i) {
             order[--dfsNum] = i;
+        }
+
+        @Override
+        void doneTree() {
+            // do nothing
         }
 
         int[] getFinishOrder() {
@@ -131,11 +140,9 @@ public class SCC {
             }
         }
 
-        void doneVisit(int i) {
-        }
+        abstract void doneVisit(int i);
 
-        void doneTree() {
-        }
+        abstract void doneTree();
     }
 
 }

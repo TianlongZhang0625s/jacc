@@ -3,12 +3,14 @@ package org.xbib.jacc;
 abstract class JaccSymbols {
     Node root;
     int size;
+
     JaccSymbols() {
         root = null;
         size = 0;
     }
 
-    private static int fill(JaccSymbol ajaccsymbol[], int i, Node node) {
+    private static int fill(JaccSymbol[] ajaccsymbol, int pos, Node node) {
+        int i = pos;
         if (node != null) {
             i = fill(ajaccsymbol, i, node.left);
             ajaccsymbol[i++] = node.data;
@@ -21,11 +23,14 @@ abstract class JaccSymbols {
         return size;
     }
 
-    int fill(JaccSymbol ajaccsymbol[], int i) {
+    int fill(JaccSymbol[] ajaccsymbol, int i) {
         return fill(ajaccsymbol, i, root);
     }
 
-    protected static class Node {
+    /**
+     *
+     */
+    static class Node {
 
         Node left;
         JaccSymbol data;

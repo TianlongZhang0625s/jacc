@@ -1,17 +1,16 @@
 package org.xbib.jacc.compiler;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  *
  */
-public abstract class Source extends Phase {
+public abstract class Source extends Phase implements Closeable {
 
     Source(Handler handler) {
         super(handler);
     }
-
-    public abstract String describe();
 
     public abstract String readLine() throws IOException;
 
@@ -21,6 +20,4 @@ public abstract class Source extends Phase {
         return null;
     }
 
-    public void close() throws IOException {
-    }
 }

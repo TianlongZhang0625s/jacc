@@ -8,38 +8,43 @@ import org.xbib.jacc.compiler.Warning;
 import org.xbib.jacc.grammar.Grammar;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  */
 class JaccParser extends Phase implements JaccTokens {
 
-    private Settings settings;
+    private static final Logger logger = Logger.getLogger(JaccParser.class.getName());
+
+    private final JaccSettings jaccSettings;
+    private final NamedJaccSymbols terminals;
+    private final NamedJaccSymbols nonterms;
+    private final NumJaccSymbols literals;
     private int seqNo;
     private JaccLexer lexer;
     private int precedence;
-    private NamedJaccSymbols terminals;
-    private NamedJaccSymbols nonterms;
-    private NumJaccSymbols literals;
-    private JaccSymbol start;
-    JaccParser(Handler handler, Settings settings1) {
+    private JaccSymbol startSymbol;
+
+    JaccParser(Handler handler, JaccSettings jaccSettings) {
         super(handler);
-        seqNo = 1;
-        precedence = 0;
-        settings = settings1;
-        terminals = new NamedJaccSymbols();
-        nonterms = new NamedJaccSymbols();
-        literals = new NumJaccSymbols();
-        start = null;
+        this.jaccSettings = jaccSettings;
+        this.terminals = new NamedJaccSymbols();
+        this.nonterms = new NamedJaccSymbols();
+        this.literals = new NumJaccSymbols();
+        this.seqNo = 1;
+        this.precedence = 0;
+        this.startSymbol = null;
     }
 
     public Grammar getGrammar() {
         try {
-            JaccSymbol ajaccsymbol[];
-            JaccProd ajaccprod[][];
+            JaccSymbol[] ajaccsymbol;
+            JaccProd[][] ajaccprod;
             int i = nonterms.getSize();
             int j = terminals.getSize() + literals.getSize() + 1;
-            if (i == 0 || start == null) {
+            if (i == 0 || startSymbol == null) {
                 report(new Failure("No nonterminals defined"));
                 return null;
             }
@@ -58,11 +63,11 @@ class JaccParser extends Phase implements JaccTokens {
                 ajaccsymbol[i + l].setNum(k++);
             }
             int i1 = 0;
-            do {
+            while (true) {
                 if (i1 >= i) {
                     break;
                 }
-                if (ajaccsymbol[i1] == start) {
+                if (ajaccsymbol[i1] == startSymbol) {
                     if (i1 > 0) {
                         JaccSymbol jaccsymbol = ajaccsymbol[0];
                         ajaccsymbol[0] = ajaccsymbol[i1];
@@ -71,7 +76,7 @@ class JaccParser extends Phase implements JaccTokens {
                     break;
                 }
                 i1++;
-            } while (true);
+            }
             for (int j1 = 0; j1 < ajaccsymbol.length; j1++) {
                 ajaccsymbol[j1].setTokenNo(j1);
             }
@@ -83,7 +88,8 @@ class JaccParser extends Phase implements JaccTokens {
                 }
             }
             return new Grammar(ajaccsymbol, ajaccprod);
-        } catch (Exception e) {
+        } catch (JaccException e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
             report(new Failure("Internal problem " + e.getMessage()));
             return null;
         }
@@ -101,8 +107,8 @@ class JaccParser extends Phase implements JaccTokens {
             String s;
             if (jacclexer.getToken() == 1) {
                 while ((s = jacclexer.readWholeLine()) != null) {
-                    settings.addPostText(s);
-                    settings.addPostText("\n");
+                    jaccSettings.addPostText(s);
+                    jaccSettings.addPostText("\n");
                 }
             }
         }
@@ -112,7 +118,7 @@ class JaccParser extends Phase implements JaccTokens {
     int[] parseSymbols(JaccLexer jacclexer) throws IOException {
         lexer = jacclexer;
         SymList symlist = null;
-        do {
+        while (true) {
             JaccSymbol jaccsymbol = parseDefinedSymbol();
             if (jaccsymbol == null) {
                 if (jacclexer.getToken() != 0) {
@@ -123,12 +129,12 @@ class JaccParser extends Phase implements JaccTokens {
             }
             symlist = new SymList(jaccsymbol, symlist);
             jacclexer.nextToken();
-        } while (true);
+        }
     }
 
     void parseErrorExamples(JaccLexer jacclexer, JaccJob jaccjob) throws IOException {
         lexer = jacclexer;
-        do {
+        while (true) {
             if (jacclexer.getToken() != 5) {
                 break;
             }
@@ -139,7 +145,7 @@ class JaccParser extends Phase implements JaccTokens {
                 report(new Warning(jacclexer.getPos(), "A colon was expected here"));
             }
             int i;
-            do {
+            while (true) {
                 Position position = jacclexer.getPos();
                 SymList symlist = null;
                 JaccSymbol jaccsymbol;
@@ -147,14 +153,14 @@ class JaccParser extends Phase implements JaccTokens {
                     symlist = new SymList(jaccsymbol, symlist);
                     jacclexer.nextToken();
                 }
-                int ai[] = SymList.toIntArray(symlist);
+                int[] ai = SymList.toIntArray(symlist);
                 jaccjob.errorExample(position, s, ai);
                 i = jacclexer.getToken();
                 if (i != 124) {
                     break;
                 }
                 jacclexer.nextToken();
-            } while (true);
+            }
             if (i != 0) {
                 if (i != 59) {
                     report(new Failure(jacclexer.getPos(), "Unexpected token; a semicolon was expected here"));
@@ -166,7 +172,7 @@ class JaccParser extends Phase implements JaccTokens {
                     jacclexer.nextToken();
                 }
             }
-        } while (true);
+        }
         if (jacclexer.getToken() != 0) {
             report(new Failure(jacclexer.getPos(), "Unexpected token; ignoring the rest of this file"));
         }
@@ -175,11 +181,13 @@ class JaccParser extends Phase implements JaccTokens {
 
     private void parseDefinitions() throws IOException {
         boolean flag = false;
-        do {
+        while (true) {
             switch (lexer.getToken()) {
                 case 0: // '\0'
                 case 1: // '\001'
                     return;
+                default:
+                    break;
             }
             if (parseDefinition()) {
                 flag = false;
@@ -190,88 +198,73 @@ class JaccParser extends Phase implements JaccTokens {
                 }
                 lexer.nextToken();
             }
-        } while (true);
+        }
     }
 
     private boolean parseDefinition() throws IOException {
         switch (lexer.getToken()) {
-            case 2: // '\002'
-                settings.addPreText(lexer.getLexeme());
+            case CODE:
+                jaccSettings.addPreText(lexer.getLexeme());
                 lexer.nextToken();
                 return true;
-
-            case 8: // '\b'
+            case TOKEN:
                 parseTokenDefn();
                 return true;
-
-            case 9: // '\t'
+            case TYPE:
                 parseTypeDefn();
                 return true;
-
-            case 11: // '\013'
+            case LEFT:
                 parseFixityDefn(Fixity.left(precedence++));
                 return true;
-
-            case 13: // '\r'
+            case NONASSOC:
                 parseFixityDefn(Fixity.nonass(precedence++));
                 return true;
-
-            case 12: // '\f'
+            case RIGHT:
                 parseFixityDefn(Fixity.right(precedence++));
                 return true;
-
-            case 14: // '\016'
+            case START:
                 parseStart();
                 return true;
-
-            case 16: // '\020'
-                settings.setClassName(parseIdent(lexer.getLexeme(), settings.getClassName()));
+            case CLASS:
+                jaccSettings.setClassName(parseIdent(lexer.getLexeme(), jaccSettings.getClassName()));
                 return true;
-
-            case 17: // '\021'
-                settings.setInterfaceName(parseIdent(lexer.getLexeme(), settings.getInterfaceName()));
+            case INTERFACE:
+                jaccSettings.setInterfaceName(parseIdent(lexer.getLexeme(), jaccSettings.getInterfaceName()));
                 return true;
-
-            case 15: // '\017'
-                settings.setPackageName(parseDefnQualName(lexer.getLexeme(), settings.getPackageName()));
+            case PACKAGE:
+                jaccSettings.setPackageName(parseDefnQualName(lexer.getLexeme(), jaccSettings.getPackageName()));
                 return true;
-
-            case 18: // '\022'
-                settings.setExtendsName(parseDefnQualName(lexer.getLexeme(), settings.getExtendsName()));
+            case EXTENDS:
+                jaccSettings.setExtendsName(parseDefnQualName(lexer.getLexeme(), jaccSettings.getExtendsName()));
                 return true;
-
-            case 19: // '\023'
+            case IMPLEMENTS:
                 lexer.nextToken();
                 String s = parseQualName();
                 if (s != null) {
-                    settings.addImplementsNames(s);
+                    jaccSettings.addImplementsNames(s);
                 }
                 return true;
-
-            case 20: // '\024'
-                settings.setTypeName(parseDefnQualName(lexer.getLexeme(), settings.getTypeName()));
+            case SEMANTIC:
+                jaccSettings.setTypeName(parseDefnQualName(lexer.getLexeme(), jaccSettings.getTypeName()));
                 if (lexer.getToken() == 58) {
-                    settings.setGetSemantic(lexer.readCodeLine());
+                    jaccSettings.setGetSemantic(lexer.readCodeLine());
                     lexer.nextToken();
                 }
                 return true;
-
-            case 21: // '\025'
-                settings.setGetToken(lexer.readCodeLine());
+            case GETTOKEN:
+                jaccSettings.setGetToken(lexer.readCodeLine());
                 lexer.nextToken();
                 return true;
-
-            case 22: // '\026'
-                settings.setNextToken(lexer.readCodeLine());
+            case NEXTTOKEN:
+                jaccSettings.setNextToken(lexer.readCodeLine());
                 lexer.nextToken();
                 return true;
-
-            case 3: // '\003'
-            case 4: // '\004'
-            case 5: // '\005'
-            case 6: // '\006'
-            case 7: // '\007'
-            case 10: // '\n'
+            case IDENT:
+            case CHARLIT:
+            case STRLIT:
+            case INTLIT:
+            case ACTION:
+            case PREC:
             default:
                 return false;
         }
@@ -284,8 +277,8 @@ class JaccParser extends Phase implements JaccTokens {
         if (jaccsymbol == null) {
             report(new Failure(position, "Missing start symbol"));
         } else {
-            if (start == null) {
-                start = jaccsymbol;
+            if (startSymbol == null) {
+                startSymbol = jaccsymbol;
             } else {
                 report(new Failure(position, "Multiple %start definitions are not permitted"));
             }
@@ -323,7 +316,7 @@ class JaccParser extends Phase implements JaccTokens {
         Position position = lexer.getPos();
         String s = optionalType();
         int i = 0;
-        do {
+        while (true) {
             JaccSymbol jaccsymbol = parseTerminal();
             if (jaccsymbol == null) {
                 if (i == 0) {
@@ -334,14 +327,14 @@ class JaccParser extends Phase implements JaccTokens {
             addType(jaccsymbol, s);
             lexer.nextToken();
             i++;
-        } while (true);
+        }
     }
 
     private void parseTypeDefn() throws IOException {
         Position position = lexer.getPos();
         String s = optionalType();
         int i = 0;
-        do {
+        while (true) {
             JaccSymbol jaccsymbol = parseSymbol();
             if (jaccsymbol == null) {
                 if (i == 0) {
@@ -352,14 +345,14 @@ class JaccParser extends Phase implements JaccTokens {
             addType(jaccsymbol, s);
             lexer.nextToken();
             i++;
-        } while (true);
+        }
     }
 
     private void parseFixityDefn(Fixity fixity) throws IOException {
         Position position = lexer.getPos();
         String s = optionalType();
         int i = 0;
-        do {
+        while (true) {
             JaccSymbol jaccsymbol = parseTerminal();
             if (jaccsymbol == null) {
                 if (i == 0) {
@@ -371,7 +364,7 @@ class JaccParser extends Phase implements JaccTokens {
             addType(jaccsymbol, s);
             lexer.nextToken();
             i++;
-        } while (true);
+        }
     }
 
     private String optionalType() throws IOException {
@@ -380,24 +373,24 @@ class JaccParser extends Phase implements JaccTokens {
             StringBuilder sb = new StringBuilder();
             label1:
             {
-                if (lexer.nextToken() != 60) {
+                if (lexer.nextToken() != TOPEN) {
                     break label0;
                 }
                 lexer.nextToken();
                 sb.append(parseQualName());
-                do {
-                    if (lexer.getToken() != 91) {
+                while (true) {
+                    if (lexer.getToken() != BOPEN) {
                         break label1;
                     }
-                    if (lexer.nextToken() != 93) {
+                    if (lexer.nextToken() != BCLOSE) {
                         break;
                     }
                     lexer.nextToken();
                     sb.append("[]");
-                } while (true);
+                }
                 report(new Failure(lexer.getPos(), "Missing ']' in array type"));
             }
-            if (lexer.getToken() == 62) {
+            if (lexer.getToken() == TCLOSE) {
                 lexer.nextToken();
             } else if (sb.length() > 0) {
                 report(new Failure(lexer.getPos(), "Missing `>' in type specification"));
@@ -422,8 +415,8 @@ class JaccParser extends Phase implements JaccTokens {
     private void parseGrammar() throws IOException {
         JaccSymbol jaccsymbol;
         while ((jaccsymbol = parseLhs()) != null) {
-            if (start == null) {
-                start = jaccsymbol;
+            if (startSymbol == null) {
+                startSymbol = jaccsymbol;
             }
             jaccsymbol.addProduction(parseRhs());
             for (; lexer.getToken() == 124; jaccsymbol.addProduction(parseRhs())) {
@@ -472,7 +465,7 @@ class JaccParser extends Phase implements JaccTokens {
     private JaccProd parseRhs() throws IOException {
         Fixity fixity = null;
         SymList symlist = null;
-        do {
+        while (true) {
             while (lexer.getToken() == 10) {
                 lexer.nextToken();
                 JaccSymbol jaccsymbol = parseSymbol();
@@ -497,7 +490,7 @@ class JaccParser extends Phase implements JaccTokens {
             }
             symlist = new SymList(jaccsymbol1, symlist);
             lexer.nextToken();
-        } while (true);
+        }
         String s = null;
         Position position = null;
         if (lexer.getToken() == 7) {
@@ -505,7 +498,7 @@ class JaccParser extends Phase implements JaccTokens {
             position = lexer.getPos();
             lexer.nextToken();
         }
-        JaccSymbol ajaccsymbol[] = SymList.toArray(symlist);
+        JaccSymbol[] ajaccsymbol = SymList.toArray(symlist);
         return new JaccProd(fixity, ajaccsymbol, position, s, seqNo++);
     }
 
@@ -515,7 +508,7 @@ class JaccParser extends Phase implements JaccTokens {
             return null;
         }
         StringBuilder stringbuffer = new StringBuilder();
-        do {
+        while (true) {
             stringbuffer.append(lexer.getLexeme());
             if (lexer.nextToken() != 46) {
                 break;
@@ -525,7 +518,7 @@ class JaccParser extends Phase implements JaccTokens {
                 break;
             }
             stringbuffer.append('.');
-        } while (true);
+        }
         return stringbuffer.toString();
     }
 
@@ -541,19 +534,20 @@ class JaccParser extends Phase implements JaccTokens {
 
             case 4: // '\004'
                 return literals.findOrAdd(s, lexer.getLastLiteral());
+            default:
+                break;
         }
         return null;
     }
 
     private JaccSymbol parseNonterminal() {
         String s = lexer.getLexeme();
-        switch (lexer.getToken()) {
-            case 3: // '\003'
-                if (terminals.find(s) != null) {
-                    return null;
-                } else {
-                    return nonterms.findOrAdd(s);
-                }
+        if (lexer.getToken() == 3) {
+            if (terminals.find(s) != null) {
+                return null;
+            } else {
+                return nonterms.findOrAdd(s);
+            }
         }
         return null;
     }
@@ -568,9 +562,10 @@ class JaccParser extends Phase implements JaccTokens {
                     jaccsymbol = nonterms.findOrAdd(s);
                 }
                 return jaccsymbol;
-
             case 4: // '\004'
                 return literals.findOrAdd(s, lexer.getLastLiteral());
+            default:
+                break;
         }
         return null;
     }
@@ -584,6 +579,8 @@ class JaccParser extends Phase implements JaccTokens {
 
             case 4: // '\004'
                 return literals.find(lexer.getLastLiteral());
+            default:
+                break;
         }
         return null;
     }
@@ -598,7 +595,8 @@ class JaccParser extends Phase implements JaccTokens {
             tail = symlist;
         }
 
-        static int length(SymList symlist) {
+        static int length(SymList list) {
+            SymList symlist = list;
             int i = 0;
             for (; symlist != null; symlist = symlist.tail) {
                 i++;
@@ -606,9 +604,10 @@ class JaccParser extends Phase implements JaccTokens {
             return i;
         }
 
-        static JaccSymbol[] toArray(SymList symlist) {
+        static JaccSymbol[] toArray(SymList list) {
+            SymList symlist = list;
             int i = length(symlist);
-            JaccSymbol ajaccsymbol[] = new JaccSymbol[i];
+            JaccSymbol[] ajaccsymbol = new JaccSymbol[i];
             while (i > 0) {
                 ajaccsymbol[--i] = symlist.head;
                 symlist = symlist.tail;
@@ -616,9 +615,10 @@ class JaccParser extends Phase implements JaccTokens {
             return ajaccsymbol;
         }
 
-        static int[] toIntArray(SymList symlist) {
+        static int[] toIntArray(SymList list) {
+            SymList symlist = list;
             int i = length(symlist);
-            int ai[] = new int[i];
+            int[] ai = new int[i];
             while (i > 0) {
                 ai[--i] = symlist.head.getTokenNo();
                 symlist = symlist.tail;

@@ -3,7 +3,7 @@ package org.xbib.jacc.util;
 /**
  *
  */
-class SeqInterator extends Interator {
+class SeqInterator implements Interator {
 
     private int count;
     private int limit;
@@ -13,10 +13,12 @@ class SeqInterator extends Interator {
         limit = j;
     }
 
+    @Override
     public int next() {
         return count++;
     }
 
+    @Override
     public boolean hasNext() {
         return count < limit;
     }

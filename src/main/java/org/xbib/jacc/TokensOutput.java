@@ -9,7 +9,7 @@ import java.io.Writer;
 /**
  *
  */
-class TokensOutput extends Output {
+class TokensOutput extends AbstractOutput {
 
     TokensOutput(Handler handler, JaccJob jaccjob) {
         super(handler, jaccjob);
@@ -18,11 +18,11 @@ class TokensOutput extends Output {
     @Override
     public void write(Writer writer) throws IOException {
         datestamp(writer);
-        String s = settings.getPackageName();
+        String s = jaccSettings.getPackageName();
         if (s != null) {
             writer.write("package " + s + ";\n\n");
         }
-        writer.write("interface " + settings.getInterfaceName() + " {\n");
+        writer.write("interface " + jaccSettings.getInterfaceName() + " {\n");
         indent(writer, 1);
         writer.write("int ENDINPUT = 0;\n");
         for (int i = 0; i < numTs - 1; i++) {
