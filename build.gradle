@@ -3,9 +3,9 @@ plugins {
 }
 
 ext {
-    user = 'jprante'
+    user = 'xbib'
     name = 'jacc'
-    description = 'Java implementation of Yet Another Compiler-Compiler'
+    description = 'A Java implementation of yacc (yet another compiler-compiler)'
     scmUrl = 'https://github.com/' + user + '/' + name
     scmConnection = 'scm:git:git://github.com/' + user + '/' + name + '.git'
     scmDeveloperConnection = 'scm:git:git://github.com/' + user + '/' + name + '.git'
@@ -22,14 +22,11 @@ apply plugin: 'pmd'
 apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
-    maven {
-        url "http://xbib.org/repository"
-    }
 }
 
 configurations {
@@ -39,6 +36,12 @@ configurations {
 dependencies {
     testCompile 'junit:junit:4.12'
     wagon 'org.apache.maven.wagon:wagon-ssh-external:2.10'
+}
+
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:all" << "-profile" << "compact1"
 }
 
 test {

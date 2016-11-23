@@ -1,6 +1,5 @@
 package org.xbib.jacc;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xbib.jacc.helper.StreamMatcher;
 
