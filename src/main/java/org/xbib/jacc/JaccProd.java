@@ -3,15 +3,15 @@ package org.xbib.jacc;
 import org.xbib.jacc.compiler.Position;
 import org.xbib.jacc.grammar.Grammar;
 
-/**
- *
- */
 class JaccProd extends Grammar.Prod {
 
-    private Fixity fixity;
-    private JaccSymbol[] prodSyms;
-    private Position actPos;
-    private String action;
+    private final Fixity fixity;
+
+    private final JaccSymbol[] prodSyms;
+
+    private final Position actPos;
+
+    private final String action;
 
     JaccProd(Fixity fixity, JaccSymbol[] jaccsymbol, Position position, String s, int i) {
         super(new int[jaccsymbol.length], i);

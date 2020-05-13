@@ -2,16 +2,17 @@ package org.xbib.jacc.compiler;
 
 import java.io.IOException;
 
-/**
- *
- */
-public abstract class SourceLexer extends Lexer {
+public abstract class SourceLexer extends Lexer implements AutoCloseable {
 
     protected String line;
+
     protected int col;
+
     protected int c;
+
     private Source source;
-    private SourcePosition pos;
+
+    private final SourcePosition pos;
 
     public SourceLexer(Handler handler, Source source) throws IOException {
         super(handler);

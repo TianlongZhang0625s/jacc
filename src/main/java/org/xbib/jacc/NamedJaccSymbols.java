@@ -1,8 +1,5 @@
 package org.xbib.jacc;
 
-/**
- *
- */
 class NamedJaccSymbols extends JaccSymbols {
 
     JaccSymbol find(String s) {

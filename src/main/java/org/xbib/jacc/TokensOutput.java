@@ -6,9 +6,6 @@ import org.xbib.jacc.grammar.Grammar;
 import java.io.IOException;
 import java.io.Writer;
 
-/**
- *
- */
 class TokensOutput extends AbstractOutput {
 
     TokensOutput(Handler handler, JaccJob jaccjob) {

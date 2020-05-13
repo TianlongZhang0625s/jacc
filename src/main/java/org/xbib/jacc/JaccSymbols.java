@@ -1,7 +1,9 @@
 package org.xbib.jacc;
 
 abstract class JaccSymbols {
+
     Node root;
+
     int size;
 
     JaccSymbols() {
@@ -33,7 +35,9 @@ abstract class JaccSymbols {
     static class Node {
 
         Node left;
+
         JaccSymbol data;
+
         Node right;
 
         Node(JaccSymbol data) {

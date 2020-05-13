@@ -6,9 +6,6 @@ import org.xbib.jacc.util.IntSet;
 import java.io.IOException;
 import java.io.Writer;
 
-/**
- *
- */
 class TextOutput extends AbstractOutput {
 
     private boolean wantFirst;

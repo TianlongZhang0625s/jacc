@@ -7,23 +7,32 @@ import org.xbib.jacc.grammar.Grammar;
 import java.io.IOException;
 import java.io.Writer;
 
-/**
- *
- */
 class ParserOutput extends AbstractOutput {
 
     private int yyaccept;
+
     private int yyabort;
+
     private int stackOverflow;
+
     private int errorHandler;
+
     private int userErrorHandler;
+
     private int[] stNumSwitches;
+
     private int[][] ntGoto;
+
     private int[][] ntGotoSrc;
+
     private int[] ntDefault;
+
     private int[] ntDistinct;
+
     private int errTok;
+
     private boolean errMsgs;
+
     private boolean errUsed;
 
     ParserOutput(Handler handler, JaccJob jaccjob) {

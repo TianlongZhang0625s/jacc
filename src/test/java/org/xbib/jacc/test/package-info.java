@@ -1,4 +1,4 @@
 /**
  * Classes for testing jacc.
  */
-package org.xbib.jacc;
+package org.xbib.jacc.test;

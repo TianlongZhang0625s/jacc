@@ -2,9 +2,6 @@ package org.xbib.jacc.compiler;
 
 import java.io.IOException;
 
-/**
- *
- */
 public abstract class Lexer extends Phase {
 
     protected int token;
@@ -35,6 +32,4 @@ public abstract class Lexer extends Phase {
             return false;
         }
     }
-
-    public abstract void close() throws IOException;
 }

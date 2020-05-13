@@ -13,8 +13,11 @@ import java.io.Writer;
 class JaccTables extends Tables {
 
     private String[] errors;
+
     private int numErrors;
+
     private int[][] index;
+
     private int[] defaultRow;
 
     JaccTables(LookaheadMachine lookaheadmachine, Resolver resolver) {

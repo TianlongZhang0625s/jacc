@@ -2,16 +2,18 @@ package org.xbib.jacc;
 
 import org.xbib.jacc.grammar.Grammar;
 
-/**
- *
- */
 class JaccSymbol extends Grammar.Symbol {
 
     private int num;
+
     private int tokenNo;
+
     private JaccProd[] jaccProds;
+
     private int pused;
+
     private Fixity fixity;
+
     private String type;
 
     JaccSymbol(String s, int i) {

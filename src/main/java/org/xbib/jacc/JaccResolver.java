@@ -7,15 +7,15 @@ import org.xbib.jacc.grammar.Resolver;
 import org.xbib.jacc.grammar.Tables;
 import org.xbib.jacc.util.IntSet;
 
-/**
- *
- */
 class JaccResolver implements Resolver {
 
-    private LookaheadMachine machine;
+    private final LookaheadMachine machine;
+
     private int numSRConflicts;
+
     private int numRRConflicts;
-    private Conflicts[] conflicts;
+
+    private final Conflicts[] conflicts;
 
     JaccResolver(LookaheadMachine lookaheadmachine) {
         numSRConflicts = 0;

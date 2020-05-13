@@ -8,9 +8,6 @@ import org.xbib.jacc.compiler.Warning;
 
 import java.io.IOException;
 
-/**
- *
- */
 class JaccLexer extends SourceLexer implements JaccTokens {
 
     private int lastLiteral;
@@ -285,7 +282,7 @@ class JaccLexer extends SourceLexer implements JaccTokens {
         }
         sb.append('\n');
         if (line != null) {
-            sb.append(line.substring(0, j));
+            sb.append(line, 0, j);
         }
         return sb.toString();
     }

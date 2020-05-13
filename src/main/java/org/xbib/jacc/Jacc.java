@@ -5,8 +5,10 @@ import org.xbib.jacc.compiler.ConsoleHandler;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,25 +16,34 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- */
 public class Jacc {
 
     private static final Logger logger = Logger.getLogger(Jacc.class.getName());
 
+    private final String suffix;
+
+    private final JaccSettings jaccSettings;
+
     private String className;
+
     private InputStream inputStream;
-    private InputStream errorDiagnostics;
-    private InputStream parserInputs;
+
+    private Reader errorDiagnostics;
+
+    private Reader parserInputs;
+
     private OutputStream outputStream;
-    private String suffix;
-    private JaccSettings jaccSettings;
+
     private boolean enableParserOutput;
+
     private boolean enableTokenOutput;
+
     private boolean enableVerboseMachineDescription;
+
     private boolean includeCalculations;
+
     private boolean includeStateNumbers;
+
     private String dir;
 
     public Jacc() {
@@ -87,19 +98,19 @@ public class Jacc {
         return inputStream;
     }
 
-    public void setErrorDiagnostics(InputStream errorDiagnostics) {
+    public void setErrorDiagnostics(Reader errorDiagnostics) {
         this.errorDiagnostics = errorDiagnostics;
     }
 
-    public InputStream getErrorDiagnostics() {
+    public Reader getErrorDiagnostics() {
         return errorDiagnostics;
     }
 
-    public void setParserInputs(InputStream parserInputs) {
+    public void setParserInputs(Reader parserInputs) {
         this.parserInputs = parserInputs;
     }
 
-    public InputStream getParserInputs() {
+    public Reader getParserInputs() {
         return parserInputs;
     }
 
@@ -154,13 +165,13 @@ public class Jacc {
                             if (i + 1 >= args.length) {
                                 usage("Missing filename for -e option");
                             }
-                            jacc.setErrorDiagnostics(Files.newInputStream(Paths.get(args[++i])));
+                            jacc.setErrorDiagnostics(Files.newBufferedReader(Paths.get(args[++i])));
                             break;
                         case 'r':
                             if (i + 1 >= args.length) {
                                 usage("Missing filename for -r option");
                             }
-                            jacc.setParserInputs(Files.newInputStream(Paths.get(args[++i])));
+                            jacc.setParserInputs(Files.newBufferedReader(Paths.get(args[++i])));
                             break;
                         case 'd':
                             if (i + 1 >= args.length) {
@@ -180,9 +191,8 @@ public class Jacc {
                     }
                     j++;
                 }
-            }
-            if (!arg.endsWith(jacc.getSuffix())) {
-                usage("Input file must have \"" + jacc.getSuffix() + "\" suffix");
+            } else if (!arg.endsWith(jacc.getSuffix())) {
+                usage("Input file must have \"" + jacc.getSuffix() + "\" suffix: " + arg);
             } else {
                 jacc.setInputStream(Files.newInputStream(Paths.get(arg)));
             }
@@ -195,38 +205,41 @@ public class Jacc {
     }
 
     public void execute() throws IOException {
-        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
-        ConsoleHandler consoleHandler = new ConsoleHandler();
-        if (dir == null) {
-            dir = ".";
-        }
-        if (!dir.endsWith("/")) {
-            dir = dir + "/";
-        }
-        final JaccJob job = new JaccJob(consoleHandler, writer, jaccSettings);
-        job.parseGrammarStream(inputStream);
-        job.buildTables();
-        jaccSettings.fillBlanks(className);
-        if (errorDiagnostics != null) {
-            job.readErrorExamples(errorDiagnostics);
-        }
-        if (consoleHandler.getNumFailures() == 0) {
-            if (enableParserOutput) {
-                (new ParserOutput(consoleHandler, job)).write(dir + jaccSettings.getClassName() + ".java");
+        try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+             Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            if (dir == null) {
+                dir = ".";
             }
-            if (enableTokenOutput) {
-                (new TokensOutput(consoleHandler, job)).write(dir + jaccSettings.getInterfaceName() + ".java");
+            if (!dir.endsWith("/")) {
+                dir = dir + "/";
             }
-            if (enableVerboseMachineDescription) {
-                (new TextOutput(consoleHandler, job, includeCalculations)).write(dir + jaccSettings.getClassName() + ".output");
+            final JaccJob job = new JaccJob(consoleHandler, writer, jaccSettings);
+            job.parseGrammarStream(reader);
+            job.buildTables();
+            jaccSettings.fillBlanks(className);
+            if (errorDiagnostics != null) {
+                job.readErrorExamples(errorDiagnostics);
+                errorDiagnostics.close();
             }
-            if (parserInputs != null) {
-                job.readRunExample(parserInputs, includeStateNumbers);
+            if (consoleHandler.getNumFailures() == 0) {
+                if (enableParserOutput) {
+                    (new ParserOutput(consoleHandler, job)).write(dir + jaccSettings.getClassName() + ".java");
+                }
+                if (enableTokenOutput) {
+                    (new TokensOutput(consoleHandler, job)).write(dir + jaccSettings.getInterfaceName() + ".java");
+                }
+                if (enableVerboseMachineDescription) {
+                    (new TextOutput(consoleHandler, job, includeCalculations)).write(dir + jaccSettings.getClassName() + ".output");
+                }
+                if (parserInputs != null) {
+                    job.readRunExample(parserInputs, includeStateNumbers);
+                    parserInputs.close();
+                }
+            } else {
+                writer.write("There were failures.\n");
             }
-        } else {
-            writer.write("There were failures.\n");
         }
-        writer.close();
     }
 
     private static void usage(String s) {

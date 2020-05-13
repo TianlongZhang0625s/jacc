@@ -11,32 +11,28 @@ import org.xbib.jacc.grammar.Grammar;
 import org.xbib.jacc.grammar.LookaheadMachine;
 import org.xbib.jacc.grammar.Parser;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 
 /**
  *
  */
 class JaccJob extends Phase {
 
-    private JaccSettings jaccSettings;
+    private final JaccSettings jaccSettings;
 
-    private JaccParser parser;
+    private final JaccParser parser;
+
+    private final Writer writer;
 
     private JaccTables tables;
 
     private JaccResolver resolver;
 
-    private Writer out;
-
-    JaccJob(Handler handler, Writer out, JaccSettings jaccSettings) {
+    JaccJob(Handler handler, Writer writer, JaccSettings jaccSettings) {
         super(handler);
-        this.out = out;
+        this.writer = writer;
         this.jaccSettings = jaccSettings;
         this.parser = new JaccParser(handler, jaccSettings);
     }
@@ -53,62 +49,24 @@ class JaccJob extends Phase {
         return resolver;
     }
 
-    void parseGrammarStream(InputStream inputStream) throws IOException {
-        JaccLexer jacclexer = lexerFromInputStream(inputStream);
-        if (jacclexer != null) {
+    void parseGrammarStream(Reader reader) throws IOException {
+        try (Reader reader1 = reader; JaccLexer jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), reader1))) {
+            jacclexer.nextToken();
             parser.parse(jacclexer);
-            jacclexer.close();
         }
     }
 
-    private JaccLexer lexerFromFile(String s) throws IOException {
-        JaccLexer jacclexer;
-        Reader filereader = new InputStreamReader(new FileInputStream(s), StandardCharsets.UTF_8);
-        jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), filereader));
-        jacclexer.nextToken();
-        return jacclexer;
-    }
-
-    private JaccLexer lexerFromInputStream(InputStream inputStream) throws IOException {
-        JaccLexer jacclexer;
-        Reader filereader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), filereader));
-        jacclexer.nextToken();
-        return jacclexer;
-    }
-
-    void readErrorExamples(String s) throws IOException {
-        out.write("Reading error examples from \"" + s + "\"");
-        JaccLexer jacclexer = lexerFromFile(s);
-        if (jacclexer != null) {
+    void readErrorExamples(Reader reader) throws IOException {
+        try (Reader reader1 = reader; JaccLexer jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), reader1))) {
+            jacclexer.nextToken();
             parser.parseErrorExamples(jacclexer, this);
-            jacclexer.close();
         }
     }
 
-    void readErrorExamples(InputStream inputStream) throws IOException {
-        JaccLexer jacclexer = lexerFromInputStream(inputStream);
-        if (jacclexer != null) {
-            parser.parseErrorExamples(jacclexer, this);
-            jacclexer.close();
-        }
-    }
-
-    void readRunExample(String s, boolean flag) throws IOException {
-        out.write("Running example from \"" + s + "\"]\n");
-        JaccLexer jacclexer = lexerFromFile(s);
-        if (jacclexer != null) {
+    void readRunExample(Reader reader, boolean flag) throws IOException {
+        try (Reader reader1 = reader; JaccLexer jacclexer = new JaccLexer(getHandler(), new JavaSource(getHandler(), reader1))) {
+            jacclexer.nextToken();
             runExample(parser.parseSymbols(jacclexer), flag);
-            jacclexer.close();
-        }
-    }
-
-    void readRunExample(InputStream inputStream, boolean flag) throws IOException {
-        out.write("Running example from input stream\n");
-        JaccLexer jacclexer = lexerFromInputStream(inputStream);
-        if (jacclexer != null) {
-            runExample(parser.parseSymbols(jacclexer), flag);
-            jacclexer.close();
         }
     }
 
@@ -148,28 +106,28 @@ class JaccJob extends Phase {
     private void runExample(int[] ai, boolean flag) throws IOException {
         Grammar grammar = parser.getGrammar();
         Parser parser1 = new Parser(tables, ai);
-        out.write("start ");
+        writer.write("start ");
         do {
-            out.write(" :  ");
-            parser1.display(out, flag);
+            writer.write(" :  ");
+            parser1.display(writer, flag);
             switch (parser1.step()) {
                 case 0:
-                    out.write("Accept!\n");
+                    writer.write("Accept!\n");
                     return;
                 case 1:
-                    out.write("error in state ");
-                    out.write(parser1.getState());
-                    out.write(", next symbol ");
-                    out.write(grammar.getSymbol(parser1.getNextSymbol()).toString());
+                    writer.write("error in state ");
+                    writer.write(parser1.getState());
+                    writer.write(", next symbol ");
+                    writer.write(grammar.getSymbol(parser1.getNextSymbol()).toString());
                     return;
                 case 3:
-                    out.write("goto  ");
+                    writer.write("goto  ");
                     break;
                 case 2:
-                    out.write("shift ");
+                    writer.write("shift ");
                     break;
                 case 4:
-                    out.write("reduce");
+                    writer.write("reduce");
                     break;
                 default:
                     break;

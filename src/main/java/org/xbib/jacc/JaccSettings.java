@@ -6,23 +6,31 @@ import org.xbib.jacc.grammar.LR0Machine;
 import org.xbib.jacc.grammar.LookaheadMachine;
 import org.xbib.jacc.grammar.SLRMachine;
 
-/**
- *
- */
 class JaccSettings {
 
     private MachineType machineType;
+
     private String packageName;
+
     private String className;
+
     private String interfaceName;
+
     private String extendsName;
+
     private String implementsNames;
+
     private String typeName;
+
     private String getToken;
+
     private String nextToken;
+
     private String getSemantic;
-    private StringBuilder preTextBuffer;
-    private StringBuilder postTextBuffer;
+
+    private final StringBuilder preTextBuffer;
+
+    private final StringBuilder postTextBuffer;
 
     JaccSettings() {
         this.machineType = MachineType.LALR1;
