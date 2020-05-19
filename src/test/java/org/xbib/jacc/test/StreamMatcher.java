@@ -1,7 +1,6 @@
 package org.xbib.jacc.test;
 
-import org.junit.Assert;
-
+import org.junit.jupiter.api.Assertions;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 
-public class StreamMatcher extends Assert {
+public class StreamMatcher {
 
     public static void assertStream(String name, InputStream expected, String actual) throws IOException {
         assertStream(name, expected, new ByteArrayInputStream(actual.getBytes(StandardCharsets.UTF_8)));
@@ -22,13 +21,13 @@ public class StreamMatcher extends Assert {
         ReadableByteChannel ch2 = Channels.newChannel(actual);
         ByteBuffer buf1 = ByteBuffer.allocateDirect(4096);
         ByteBuffer buf2 = ByteBuffer.allocateDirect(4096);
-        try {
+        try (expected; actual) {
             while (true) {
                 int n1 = ch1.read(buf1);
                 int n2 = ch2.read(buf2);
                 if (n1 == -1 || n2 == -1) {
                     if (n1 != n2) {
-                        fail(name + ": stream length mismatch: " + n1 + " != " + n2 + " offset=" + offset);
+                        Assertions.fail(name + ": stream length mismatch: " + n1 + " != " + n2 + " offset=" + offset);
                     } else {
                         return;
                     }
@@ -39,7 +38,7 @@ public class StreamMatcher extends Assert {
                     int b1 = buf1.get() & 0xFF;
                     int b2 = buf2.get() & 0xFF;
                     if (b1 != b2) {
-                        fail(name + ": mismatch at offset " + (offset + i)
+                        Assertions.fail(name + ": mismatch at offset " + (offset + i)
                                 + " (" + Integer.toHexString(b1)
                                 + " != " + Integer.toHexString(b2) + ")"
                         );
@@ -49,9 +48,6 @@ public class StreamMatcher extends Assert {
                 buf2.compact();
                 offset += Math.min(n1, n2);
             }
-        } finally {
-            expected.close();
-            actual.close();
         }
     }
 }

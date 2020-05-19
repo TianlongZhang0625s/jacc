@@ -1,0 +1,18 @@
+
+apply plugin: "com.github.spotbugs"
+
+spotbugs {
+    effort = "max"
+    reportLevel = "low"
+    //includeFilter = file("findbugs-exclude.xml")
+}
+
+/*
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    ignoreFailures = true
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+*/

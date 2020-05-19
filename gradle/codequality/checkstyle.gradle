@@ -1,0 +1,15 @@
+apply plugin: 'checkstyle'
+
+tasks.withType(Checkstyle) {
+    ignoreFailures = true
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+checkstyle {
+    //configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    ignoreFailures = true
+    showViolations = true
+}

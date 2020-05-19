@@ -1,6 +1,6 @@
 package org.xbib.jacc.test;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xbib.jacc.Jacc;
 import org.xbib.jacc.MachineType;
 

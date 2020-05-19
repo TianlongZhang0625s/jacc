@@ -1,0 +1,83 @@
+
+if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
+
+    apply plugin: 'io.codearte.nexus-staging'
+    apply plugin: "de.marcphilipp.nexus-publish"
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+                pom {
+                    name = project.name
+                    description = project.ext.description
+                    url = project.ext.url
+                    inceptionYear = project.ext.inceptionYear
+                    packaging = 'jar'
+                    organization {
+                        name = 'xbib'
+                        url = 'https://xbib.org'
+                    }
+                    developers {
+                        developer {
+                            id = 'jprante'
+                            name = 'Jörg Prante'
+                            email = 'joergprante@gmail.com'
+                            url = 'https://github.com/jprante'
+                        }
+                    }
+                    scm {
+                        url = project.ext.scmUrl
+                        connection = project.ext.scmConnection
+                        developerConnection = project.ext.scmDeveloperConnection
+                    }
+                    issueManagement {
+                        system = project.ext.issueManagementSystem
+                        url = project.ext.issueManagementUrl
+                    }
+                    licenses {
+                        license {
+                            name = project.ext.licenseName
+                            url = project.ext.licenseUrl
+                            distribution = 'repo'
+                        }
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                credentials {
+                    username = project.property('ossrhUsername')
+                    password = project.property('ossrhPassword')
+                }
+            }
+        }
+    }
+
+    if (project.hasProperty("signing.keyId")) {
+        apply plugin: 'signing'
+        signing {
+            sign publishing.publications.mavenJava
+        }
+    }
+
+    nexusPublishing {
+        repositories {
+            sonatype {
+                username = project.property('ossrhUsername')
+                password = project.property('ossrhPassword')
+                packageGroup = "org.xbib"
+            }
+        }
+    }
+
+    nexusStaging {
+        username = project.property('ossrhUsername')
+        password = project.property('ossrhPassword')
+        packageGroup = "org.xbib"
+    }
+}
